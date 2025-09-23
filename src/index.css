@@ -2,41 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Mandy's Music Quest Design System - Gaming & Music Theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark gaming background */
+    --background: 240 10% 8%;
+    --foreground: 300 20% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards with subtle glass effect */
+    --card: 240 8% 12%;
+    --card-foreground: 300 15% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 8% 12%;
+    --popover-foreground: 300 15% 90%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Music-themed purple primary */
+    --primary: 280 90% 65%;
+    --primary-foreground: 240 10% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Gaming secondary with pink tint */
+    --secondary: 320 25% 20%;
+    --secondary-foreground: 300 20% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted gaming tones */
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 10% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Neon accent for highlights */
+    --accent: 300 100% 75%;
+    --accent-foreground: 240 10% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Gaming red for destructive */
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 240 10% 8%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Subtle borders and inputs */
+    --border: 240 8% 20%;
+    --input: 240 8% 16%;
+    --ring: 280 90% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Music Quest Custom Tokens */
+    --neon-purple: 280 90% 65%;
+    --neon-pink: 320 100% 70%;
+    --neon-blue: 240 100% 70%;
+    --game-success: 120 100% 60%;
+    --game-warning: 45 100% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(280, 90%, 65%), hsl(320, 100%, 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(240, 100%, 70%), hsl(280, 90%, 65%));
+    --gradient-game: linear-gradient(180deg, hsl(240, 10%, 12%), hsl(240, 8%, 8%));
+    --gradient-neon: linear-gradient(90deg, hsl(280, 90%, 65%), hsl(320, 100%, 70%), hsl(240, 100%, 70%));
+    
+    /* Shadows & Effects */
+    --shadow-neon: 0 0 20px hsl(280, 90%, 65%, 0.5);
+    --shadow-card: 0 8px 32px hsl(240, 10%, 4%, 0.8);
+    --shadow-game: 0 4px 20px hsl(240, 10%, 4%, 0.6);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +129,52 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: var(--gradient-game);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-neon {
+    background: var(--gradient-neon);
+  }
+  
+  .shadow-neon {
+    box-shadow: var(--shadow-neon);
+  }
+  
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-game {
+    box-shadow: var(--shadow-game);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .neon-text {
+    text-shadow: 0 0 10px hsl(var(--neon-purple)), 0 0 20px hsl(var(--neon-purple));
   }
 }

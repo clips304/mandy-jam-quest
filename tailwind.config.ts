@@ -57,6 +57,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Music Quest custom colors
+        neon: {
+          purple: "hsl(var(--neon-purple))",
+          pink: "hsl(var(--neon-pink))",
+          blue: "hsl(var(--neon-blue))",
+        },
+        game: {
+          success: "hsl(var(--game-success))",
+          warning: "hsl(var(--game-warning))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
