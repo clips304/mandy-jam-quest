@@ -1,7 +1,7 @@
 import { Song } from '../types/game';
 
 // YouTube API configuration
-const YOUTUBE_API_KEY = ''; // Will be set by user or use server proxy
+const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 
 // Curated fallback library for when API fails or returns no results
