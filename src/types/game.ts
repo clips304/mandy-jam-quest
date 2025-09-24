@@ -2,6 +2,7 @@ export interface Song {
   title: string;
   artist: string;
   decade: string;
+  year: string; // Accurate release year from YouTube API
   url: string;
   thumbnail: string;
   isCustomPick?: boolean;

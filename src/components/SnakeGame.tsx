@@ -5,7 +5,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 import SongRecommendationPopup from './SongRecommendationPopup';
 import { GamePreferences } from './GameSetup';
 import { Song } from '../types/game';
-import { getRecommendation } from '../services/musicService';
+import { getMultipleRecommendations } from '../services/musicService';
 
 interface SnakeGameProps {
   preferences: GamePreferences;
@@ -39,7 +39,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
   const [speed, setSpeed] = useState(INITIAL_SPEED);
   const [levelCompleted, setLevelCompleted] = useState(false);
   const [showRecommendation, setShowRecommendation] = useState(false);
-  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [currentSongs, setCurrentSongs] = useState<Song[]>([]);
   const [isLoadingSong, setIsLoadingSong] = useState(false);
 
   const levelTarget = level * 10;
@@ -132,21 +132,22 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       setIsLoadingSong(true);
       
       try {
-        const song = await getRecommendation(preferences.genre, preferences.decade, preferences.artist);
-        setCurrentSong(song);
+        const songs = await getMultipleRecommendations(preferences.genre, preferences.decade, preferences.artist);
+        setCurrentSongs(songs);
         setShowRecommendation(true);
       } catch (error) {
-        console.error('Error getting recommendation:', error);
-        // Fallback song
-        const fallbackSong: Song = {
-          title: "Great Choice!",
+        console.error('Error getting recommendations:', error);
+        // Fallback songs
+        const fallbackSongs: Song[] = Array.from({ length: 5 }, (_, i) => ({
+          title: `Great Choice #${i + 1}`,
           artist: preferences.artist || "Various Artists",
           decade: preferences.decade,
+          year: preferences.decade.split('–')[0] || 'Unknown',
           url: "https://youtube.com",
           thumbnail: "",
           isCustomPick: !!preferences.artist
-        };
-        setCurrentSong(fallbackSong);
+        }));
+        setCurrentSongs(fallbackSongs);
         setShowRecommendation(true);
       } finally {
         setIsLoadingSong(false);
@@ -269,7 +270,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
     setSpeed(INITIAL_SPEED);
     setLevelCompleted(false);
     setShowRecommendation(false);
-    setCurrentSong(null);
+    setCurrentSongs([]);
     resetSnake();
     setGameState('idle');
   }, [resetSnake]);
@@ -511,9 +512,9 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       </div>
 
       {/* Song Recommendation Popup */}
-      {showRecommendation && currentSong && (
+      {showRecommendation && currentSongs.length > 0 && (
         <SongRecommendationPopup
-          song={currentSong}
+          songs={currentSongs}
           level={level}
           onNextLevel={handleNextLevel}
           onRestart={handleRestart}
