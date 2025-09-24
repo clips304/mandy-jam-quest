@@ -135,9 +135,6 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
               <p>🐍 Use arrow keys to move</p>
               <p>🎵 Complete levels to unlock songs</p>
               <p>🎯 Reach the target score to advance</p>
-              <p className="text-xs text-yellow-400 mt-2">
-                ⚠️ Only official artist uploads from the selected decade will be shown
-              </p>
             </div>
           </CardContent>
         </Card>

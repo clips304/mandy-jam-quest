@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ExternalLink, Plus, Play, RotateCcw, Sparkles, AlertCircle } from 'lucide-react';
+import { ExternalLink, Plus, Play, RotateCcw, Sparkles } from 'lucide-react';
 import { Song } from '../types/game';
 
 interface SongRecommendationPopupProps {
@@ -25,14 +25,9 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
   };
 
   const handlePlayOnYouTube = (song: Song) => {
-    if (song.url === 'https://youtube.com') {
-      return; // Don't open placeholder URLs
-    }
     window.open(song.url, '_blank', 'noopener,noreferrer');
   };
 
-  // Check if we have no official songs
-  const hasOfficialSongs = songs.length > 0 && songs[0].title !== 'No Official Content Available';
   return (
     <Dialog open={true} modal>
       <DialogContent className="sm:max-w-md glass-effect border-border/50 shadow-card">
@@ -43,43 +38,8 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* No Official Content Message */}
-          {!hasOfficialSongs && (
-            <Card className="glass-effect border-border/50 border-yellow-500/50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-yellow-400">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">No official uploads available</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      No verified official content found for this artist in the selected decade.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Limited Results Message */}
-          {hasOfficialSongs && songs.length < 5 && (
-            <Card className="glass-effect border-border/50 border-blue-500/50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-blue-400">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Limited official content</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Only {songs.length} official song{songs.length !== 1 ? 's' : ''} found for this decade.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Song Cards */}
-          {hasOfficialSongs && (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-3 max-h-96 overflow-y-auto">
             {songs.map((song, index) => (
               <Card key={index} className="glass-effect border-border/50">
                 <CardContent className="p-4">
@@ -136,7 +96,6 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                   <div className="flex gap-2 mt-4">
                     <Button
                       onClick={() => handlePlayOnYouTube(song)}
-                      disabled={song.url === 'https://youtube.com'}
                       variant="game"
                       size="sm"
                       className="flex-1"
@@ -157,16 +116,11 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                 </CardContent>
               </Card>
             ))}
-            </div>
-          )}
+          </div>
 
           {/* Message */}
           <div className="text-center text-sm text-muted-foreground">
-            {hasOfficialSongs ? (
-              <p>🎵 Here are {songs.length} official song{songs.length !== 1 ? 's' : ''} matching your taste!</p>
-            ) : (
-              <p>🎵 Try a different artist or decade for official recommendations!</p>
-            )}
+            <p>🎵 Here are {songs.length} songs matching your taste!</p>
             <p className="mt-1">Ready for the next level?</p>
           </div>
 
