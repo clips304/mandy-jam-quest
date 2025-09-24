@@ -133,6 +133,83 @@ function buildSearchQueries(genre: string, decade: string, artist?: string): str
   return queries;
 }
 
+// Find official artist channel
+async function findOfficialChannel(artistName: string): Promise<string | null> {
+  if (!YOUTUBE_API_KEY) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    part: 'snippet,statistics,brandingSettings',
+    q: `${artistName} official`,
+    type: 'channel',
+    maxResults: '5',
+    key: YOUTUBE_API_KEY
+  });
+
+  try {
+    const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const channels = data.items || [];
+    
+    // Find best matching official channel
+    const officialChannel = channels.find(channel => {
+      const channelTitle = channel.snippet.title.toLowerCase();
+      const artistLower = artistName.toLowerCase();
+      
+      // Check if channel title contains exact artist name
+      const hasArtistName = channelTitle.includes(artistLower);
+      
+      // Check for official indicators
+      const isOfficial = channelTitle.includes('official') || 
+                        channelTitle.includes('vevo') ||
+                        channel.snippet.description?.toLowerCase().includes('official');
+      
+      // Prefer channels with high subscriber count (indicates legitimacy)
+      const subscriberCount = parseInt(channel.statistics?.subscriberCount || '0');
+      
+      return (hasArtistName && isOfficial) || 
+             (hasArtistName && subscriberCount > 100000);
+    });
+    
+    return officialChannel ? officialChannel.id.channelId : null;
+  } catch (error) {
+    console.warn('Failed to find official channel:', error);
+    return null;
+  }
+}
+
+// Search within specific channel
+async function searchInChannel(channelId: string, query: string): Promise<any[]> {
+  if (!YOUTUBE_API_KEY) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    part: 'snippet',
+    channelId: channelId,
+    q: query,
+    type: 'video',
+    videoCategoryId: '10', // Music category
+    maxResults: '10',
+    order: 'relevance',
+    key: YOUTUBE_API_KEY
+  });
+
+  try {
+    const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    return data.items || [];
+  } catch (error) {
+    console.warn('Failed to search in channel:', error);
+    return [];
+  }
+}
+
 // Fetch from YouTube API with enhanced search
 async function fetchYouTube(query: string): Promise<any[]> {
   if (!YOUTUBE_API_KEY) {
@@ -295,13 +372,41 @@ function getFallbackSong(genre: string, decade: string, artist?: string): Song {
   };
 }
 
-// Main recommendation function with enhanced search strategies
+// Main recommendation function with official channel priority
 export async function getRecommendation(genre: string, decade: string, artist?: string): Promise<Song> {
   try {
-    // Get multiple search strategies
+    // If artist is provided, try official channel search first
+    if (artist) {
+      try {
+        // Step 1: Find official artist channel
+        const channelId = await findOfficialChannel(artist);
+        
+        if (channelId) {
+          // Step 2: Search within official channel
+          const decadeKeywords = getDecadeKeywords(decade);
+          const channelQuery = `${genre} ${decadeKeywords}`;
+          const channelResults = await searchInChannel(channelId, channelQuery);
+          
+          if (channelResults.length > 0) {
+            const song = await parseYouTubeResults(channelResults, artist);
+            if (song) {
+              song.decade = decade;
+              song.isOfficialSource = true;
+              console.log(`Found official recommendation for ${artist} from channel ${channelId}`);
+              return song;
+            }
+          }
+        }
+        
+        console.log(`No official channel found for ${artist}, falling back to general search`);
+      } catch (channelError) {
+        console.warn('Official channel search failed:', channelError);
+      }
+    }
+    
+    // Fallback: Use general search with query strategies
     const queries = buildSearchQueries(genre, decade, artist);
     
-    // Try each search strategy until we find a good song
     for (const query of queries) {
       try {
         const results = await fetchYouTube(query);
@@ -309,7 +414,8 @@ export async function getRecommendation(genre: string, decade: string, artist?: 
         
         if (song) {
           song.decade = decade;
-          console.log(`Found recommendation via query: "${query}"`);
+          song.isOfficialSource = false; // Mark as unverified source
+          console.log(`Found recommendation via general search: "${query}"`);
           return song;
         }
       } catch (apiError) {
@@ -320,12 +426,11 @@ export async function getRecommendation(genre: string, decade: string, artist?: 
     
     console.warn('All YouTube search strategies failed, using fallback');
     
-    // Fallback to curated library
+    // Final fallback to curated library
     return getFallbackSong(genre, decade, artist);
     
   } catch (error) {
     console.error('Error getting recommendation:', error);
-    // Ultimate fallback
     return getFallbackSong(genre, decade, artist);
   }
 }
