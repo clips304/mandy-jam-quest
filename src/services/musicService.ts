@@ -4,155 +4,95 @@ import { Song } from '../types/game';
 const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
+const YOUTUBE_CHANNELS_URL = 'https://www.googleapis.com/youtube/v3/channels';
 
 // Track recommended songs to prevent repeats
 const recommendedSongs = new Set<string>();
 
-// Curated fallback library for when API fails or returns no results
-const curatedLibrary: Record<string, Record<string, Song[]>> = {
-  'R&B': {
-    '1990–2000': [
-      {
-        title: 'I Will Always Love You',
-        artist: 'Whitney Houston',
-        decade: '1990–2000',
-        year: '1992',
-        url: 'https://youtube.com/watch?v=3JWTaaS7LdU',
-        thumbnail: ''
-      },
-      {
-        title: 'No Scrubs',
-        artist: 'TLC',
-        decade: '1990–2000',
-        year: '1999',
-        url: 'https://youtube.com/watch?v=FrLequ6dUdM',
-        thumbnail: ''
-      }
-    ],
-    '2000–2010': [
-      {
-        title: 'Crazy in Love',
-        artist: 'Beyoncé',
-        decade: '2000–2010',
-        year: '2003',
-        url: 'https://youtube.com/watch?v=ViwtNLUqkMY',
-        thumbnail: ''
-      }
-    ]
-  },
-  'Hip-Hop': {
-    '1990–2000': [
-      {
-        title: 'Juicy',
-        artist: 'The Notorious B.I.G.',
-        decade: '1990–2000',
-        year: '1994',
-        url: 'https://youtube.com/watch?v=_JZom_gVfuw',
-        thumbnail: ''
-      }
-    ],
-    '2000–2010': [
-      {
-        title: 'In Da Club',
-        artist: '50 Cent',
-        decade: '2000–2010',
-        year: '2003',
-        url: 'https://youtube.com/watch?v=5qm8PH4xAss',
-        thumbnail: ''
-      }
-    ]
-  },
-  'Rock': {
-    '1970–1980': [
-      {
-        title: 'Bohemian Rhapsody',
-        artist: 'Queen',
-        decade: '1970–1980',
-        year: '1975',
-        url: 'https://youtube.com/watch?v=fJ9rUzIMcZQ',
-        thumbnail: ''
-      }
-    ],
-    '1980–1990': [
-      {
-        title: 'Sweet Child O\' Mine',
-        artist: 'Guns N\' Roses',
-        decade: '1980–1990',
-        year: '1987',
-        url: 'https://youtube.com/watch?v=1w7OgIMMRc4',
-        thumbnail: ''
-      }
-    ]
-  },
-  'Pop': {
-    '1980–1990': [
-      {
-        title: 'Billie Jean',
-        artist: 'Michael Jackson',
-        decade: '1980–1990',
-        year: '1983',
-        url: 'https://youtube.com/watch?v=Zi_XLOBDo_Y',
-        thumbnail: ''
-      }
-    ],
-    '2000–2010': [
-      {
-        title: 'Hips Don\'t Lie',
-        artist: 'Shakira',
-        decade: '2000–2010',
-        year: '2006',
-        url: 'https://youtube.com/watch?v=DUT5rEU6pqM',
-        thumbnail: ''
-      }
-    ]
-  }
-};
-
-// Convert decade range to search keywords
-function getDecadeKeywords(decade: string): string {
-  const decadeMap: Record<string, string> = {
-    '1950–1960': '1950s',
-    '1960–1970': '1960s',
-    '1970–1980': '1970s',
-    '1980–1990': '1980s',
-    '1990–2000': '1990s',
-    '2000–2010': '2000s',
-    '2010–2020': '2010s',
-    '2020–Present': '2020s'
+// Convert decade range to date filters for YouTube API
+function getDecadeDateFilters(decade: string): { publishedAfter: string; publishedBefore: string } {
+  const decadeMap: Record<string, { start: string; end: string }> = {
+    '1950–1960': { start: '1950-01-01', end: '1960-12-31' },
+    '1960–1970': { start: '1960-01-01', end: '1970-12-31' },
+    '1970–1980': { start: '1970-01-01', end: '1980-12-31' },
+    '1980–1990': { start: '1980-01-01', end: '1990-12-31' },
+    '1990–2000': { start: '1990-01-01', end: '2000-12-31' },
+    '2000–2010': { start: '2000-01-01', end: '2010-12-31' },
+    '2010–2020': { start: '2010-01-01', end: '2020-12-31' },
+    '2020–Present': { start: '2020-01-01', end: '2029-12-31' }
   };
-  return decadeMap[decade] || decade;
-}
 
-// Build search queries for YouTube (multiple strategies for better results)
-function buildSearchQueries(genre: string, decade: string, artist?: string): string[] {
-  const decadeKeywords = getDecadeKeywords(decade);
-  const queries: string[] = [];
-  
-  if (artist) {
-    queries.push(`${artist} ${genre} ${decadeKeywords} official music video`);
-    queries.push(`${artist} best songs ${decadeKeywords} official`);
-    queries.push(`${artist} ${genre} hits official audio`);
-  } else {
-    queries.push(`best ${genre} songs ${decadeKeywords} official music video`);
-    queries.push(`top ${genre} hits ${decadeKeywords} billboard chart`);
-    queries.push(`${genre} classics ${decadeKeywords} greatest hits official`);
-    queries.push(`popular ${genre} songs ${decadeKeywords} most viewed`);
+  const range = decadeMap[decade];
+  if (!range) {
+    throw new Error(`Invalid decade: ${decade}`);
   }
-  
-  return queries;
+
+  return {
+    publishedAfter: `${range.start}T00:00:00Z`,
+    publishedBefore: `${range.end}T23:59:59Z`
+  };
 }
 
-// Find official artist channel
+// Verify if a channel is official by checking verification status and indicators
+async function verifyOfficialChannel(channelId: string, artistName: string): Promise<boolean> {
+  if (!YOUTUBE_API_KEY) {
+    return false;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet,statistics,brandingSettings,status',
+      id: channelId,
+      key: YOUTUBE_API_KEY
+    });
+
+    const response = await fetch(`${YOUTUBE_CHANNELS_URL}?${params}`);
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    const channel = data.items?.[0];
+    
+    if (!channel) return false;
+
+    const snippet = channel.snippet;
+    const statistics = channel.statistics;
+    const channelTitle = snippet.title.toLowerCase();
+    const artistLower = artistName.toLowerCase();
+
+    // Check if channel title contains artist name
+    const hasArtistName = channelTitle.includes(artistLower);
+    if (!hasArtistName) return false;
+
+    // Check for official indicators
+    const isVerified = channelTitle.includes('official') || 
+                      channelTitle.includes('vevo') ||
+                      snippet.description?.toLowerCase().includes('official');
+
+    // Check subscriber count (official channels typically have high subscriber counts)
+    const subscriberCount = parseInt(statistics?.subscriberCount || '0');
+    const hasHighSubscribers = subscriberCount > 50000;
+
+    // Check if channel is verified (this would be in status.longUploadsStatus or other verification fields)
+    // Note: YouTube API doesn't directly expose verification badge status in public API
+    
+    return isVerified && hasHighSubscribers;
+  } catch (error) {
+    console.warn('Failed to verify official channel:', error);
+    return false;
+  }
+}
+
+// Find official artist channel with strict verification
 async function findOfficialChannel(artistName: string): Promise<string | null> {
   if (!YOUTUBE_API_KEY) {
     return null;
   }
 
   const params = new URLSearchParams({
-    part: 'snippet,statistics,brandingSettings',
+    part: 'snippet,statistics',
     q: `${artistName} official`,
     type: 'channel',
-    maxResults: '5',
+    maxResults: '10',
     key: YOUTUBE_API_KEY
   });
 
@@ -163,393 +103,183 @@ async function findOfficialChannel(artistName: string): Promise<string | null> {
     const data = await response.json();
     const channels = data.items || [];
     
-    // Find best matching official channel
-    const officialChannel = channels.find(channel => {
-      const channelTitle = channel.snippet.title.toLowerCase();
-      const artistLower = artistName.toLowerCase();
+    // Find and verify official channels
+    for (const channel of channels) {
+      const channelId = channel.id.channelId;
+      const isOfficial = await verifyOfficialChannel(channelId, artistName);
       
-      // Check if channel title contains exact artist name
-      const hasArtistName = channelTitle.includes(artistLower);
-      
-      // Check for official indicators
-      const isOfficial = channelTitle.includes('official') || 
-                        channelTitle.includes('vevo') ||
-                        channel.snippet.description?.toLowerCase().includes('official');
-      
-      // Prefer channels with high subscriber count (indicates legitimacy)
-      const subscriberCount = parseInt(channel.statistics?.subscriberCount || '0');
-      
-      return (hasArtistName && isOfficial) || 
-             (hasArtistName && subscriberCount > 100000);
-    });
+      if (isOfficial) {
+        console.log(`Found verified official channel for ${artistName}: ${channel.snippet.title}`);
+        return channelId;
+      }
+    }
     
-    return officialChannel ? officialChannel.id.channelId : null;
+    console.log(`No verified official channel found for ${artistName}`);
+    return null;
   } catch (error) {
     console.warn('Failed to find official channel:', error);
     return null;
   }
 }
 
-// Search within specific channel
-async function searchInChannel(channelId: string, query: string): Promise<any[]> {
+// Search within official channel with strict decade filtering
+async function searchOfficialChannel(
+  channelId: string, 
+  genre: string, 
+  decade: string, 
+  artistName: string
+): Promise<Song[]> {
   if (!YOUTUBE_API_KEY) {
     return [];
   }
 
-  const params = new URLSearchParams({
-    part: 'snippet',
-    channelId: channelId,
-    q: query,
-    type: 'video',
-    videoCategoryId: '10', // Music category
-    maxResults: '10',
-    order: 'relevance',
-    key: YOUTUBE_API_KEY
-  });
-
   try {
+    const dateFilters = getDecadeDateFilters(decade);
+    
+    const params = new URLSearchParams({
+      part: 'snippet',
+      channelId: channelId,
+      q: genre,
+      type: 'video',
+      videoCategoryId: '10', // Music category
+      maxResults: '20', // Get more results for better filtering
+      order: 'relevance',
+      publishedAfter: dateFilters.publishedAfter,
+      publishedBefore: dateFilters.publishedBefore,
+      key: YOUTUBE_API_KEY
+    });
+
     const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.error(`YouTube API error: ${response.status}`);
+      return [];
+    }
     
     const data = await response.json();
-    return data.items || [];
-  } catch (error) {
-    console.warn('Failed to search in channel:', error);
-    return [];
-  }
-}
-
-// Fetch from YouTube API with enhanced search
-async function fetchYouTube(query: string): Promise<any[]> {
-  if (!YOUTUBE_API_KEY) {
-    throw new Error('YouTube API key not configured');
-  }
-
-  const params = new URLSearchParams({
-    part: 'snippet',
-    q: query,
-    type: 'video',
-    videoCategoryId: '10', // Music category
-    maxResults: '10', // Get more results for better filtering
-    order: 'relevance', // Order by relevance for quality
-    key: YOUTUBE_API_KEY
-  });
-
-  const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
-  
-  if (!response.ok) {
-    throw new Error(`YouTube API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.items || [];
-}
-
-// Fetch video details to get view counts and better ranking
-async function fetchVideoDetails(videoIds: string[]): Promise<any[]> {
-  if (!YOUTUBE_API_KEY || videoIds.length === 0) {
-    return [];
-  }
-
-  const params = new URLSearchParams({
-    part: 'statistics,contentDetails',
-    id: videoIds.join(','),
-    key: YOUTUBE_API_KEY
-  });
-
-  try {
-    const response = await fetch(`${YOUTUBE_VIDEOS_URL}?${params}`);
-    if (!response.ok) return [];
+    const results = data.items || [];
     
-    const data = await response.json();
-    return data.items || [];
-  } catch (error) {
-    console.warn('Failed to fetch video details:', error);
-    return [];
-  }
-}
-
-// Extract year from published date
-function extractYear(publishedAt: string): string {
-  try {
-    return new Date(publishedAt).getFullYear().toString();
-  } catch {
-    return 'Unknown';
-  }
-}
-
-// Parse YouTube results to Song format with quality filtering
-async function parseYouTubeResults(results: any[], originalArtist?: string): Promise<Song[]> {
-  if (results.length === 0) return [];
-  
-  // Filter and score results
-  const candidates = results
-    .filter(item => {
-      const title = item.snippet.title.toLowerCase();
-      const channelTitle = item.snippet.channelTitle.toLowerCase();
+    console.log(`Found ${results.length} videos in official channel for ${artistName} in ${decade}`);
+    
+    // Filter and convert results to Song format
+    const songs: Song[] = [];
+    
+    for (const item of results) {
+      if (songs.length >= 5) break; // Limit to 5 songs
+      
+      const snippet = item.snippet;
       const videoId = item.id.videoId;
       
       // Skip if already recommended
-      if (recommendedSongs.has(videoId)) return false;
+      if (recommendedSongs.has(videoId)) continue;
+      
+      // Additional filtering for music content
+      const title = snippet.title.toLowerCase();
       
       // Skip obvious non-music content
-      const skipTerms = ['tutorial', 'how to', 'reaction', 'review', 'cover version', 'karaoke', 'instrumental only'];
-      if (skipTerms.some(term => title.includes(term))) return false;
+      const skipTerms = ['tutorial', 'how to', 'reaction', 'review', 'behind the scenes', 'interview', 'documentary'];
+      if (skipTerms.some(term => title.includes(term))) continue;
       
-      // Skip very short videos (likely clips) and very long ones (likely not single songs)
-      const duration = item.snippet.duration;
-      if (duration && (duration < 60 || duration > 600)) return false;
+      // Verify the published date is within the decade (double-check)
+      const publishedYear = new Date(snippet.publishedAt).getFullYear();
+      const [startYear, endYear] = decade.split('–').map(y => y === 'Present' ? 2029 : parseInt(y));
       
-      return true;
-    })
-    .map(item => {
-      const snippet = item.snippet;
-      const title = snippet.title.toLowerCase();
-      const channelTitle = snippet.channelTitle.toLowerCase();
+      if (publishedYear < startYear || publishedYear > endYear) {
+        console.warn(`Skipping video outside decade range: ${snippet.title} (${publishedYear})`);
+        continue;
+      }
       
-      let score = 0;
+      // Mark as recommended
+      recommendedSongs.add(videoId);
       
-      // Boost official content
-      if (title.includes('official') || channelTitle.includes('official')) score += 100;
-      if (title.includes('music video')) score += 50;
-      if (title.includes('audio')) score += 30;
-      
-      // Boost verified/known music channels
-      const musicChannels = ['vevo', 'records', 'music', 'entertainment'];
-      if (musicChannels.some(term => channelTitle.includes(term))) score += 40;
-      
-      // Boost if artist matches
-      if (originalArtist && channelTitle.includes(originalArtist.toLowerCase())) score += 80;
-      
-      // Boost based on title quality indicators
-      if (title.includes('hd') || title.includes('4k')) score += 10;
-      if (title.includes('remastered')) score += 20;
-      
-      return { item, score };
-    })
-    .sort((a, b) => b.score - a.score);
-  
-  if (candidates.length === 0) return [];
-  
-  // Get up to 5 best candidates
-  const topCandidates = candidates.slice(0, Math.min(5, candidates.length));
-  const videoIds = topCandidates.map(c => c.item.id.videoId);
-  const videoDetails = await fetchVideoDetails(videoIds);
-  
-  // Convert candidates to songs with view count consideration
-  const songs: Song[] = [];
-  
-  for (const candidate of topCandidates) {
-    const item = candidate.item;
-    const snippet = item.snippet;
-    const details = videoDetails.find(v => v.id === item.id.videoId);
-    
-    // Mark as recommended to prevent repeats
-    recommendedSongs.add(item.id.videoId);
-    
-    songs.push({
-      title: snippet.title,
-      artist: originalArtist || snippet.channelTitle,
-      decade: '', // Will be set by caller
-      year: extractYear(snippet.publishedAt),
-      url: `https://youtube.com/watch?v=${item.id.videoId}`,
-      thumbnail: snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || ''
-    });
-  }
-  
-  return songs;
-}
-
-// Get fallback songs from curated library (always return 5)
-function getFallbackSongs(genre: string, decade: string, artist?: string): Song[] {
-  const songs: Song[] = [];
-  const genreSongs = curatedLibrary[genre];
-  
-  // Try to get songs from curated library
-  if (genreSongs && genreSongs[decade] && genreSongs[decade].length > 0) {
-    const availableSongs = genreSongs[decade];
-    // Add all available songs, up to 5
-    for (let i = 0; i < Math.min(5, availableSongs.length); i++) {
-      songs.push({ 
-        ...availableSongs[i], 
-        year: availableSongs[i].decade.split('–')[0] || 'Unknown'
+      songs.push({
+        title: snippet.title,
+        artist: artistName,
+        decade: decade,
+        year: publishedYear.toString(),
+        url: `https://youtube.com/watch?v=${videoId}`,
+        thumbnail: snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '',
+        isOfficialSource: true
       });
     }
+    
+    return songs;
+  } catch (error) {
+    console.error('Failed to search official channel:', error);
+    return [];
   }
-  
-  // Fill remaining slots with custom picks
-  while (songs.length < 5) {
-    songs.push({
-      title: artist ? `${artist} - ${genre} Hit #${songs.length + 1}` : `${genre} Classic #${songs.length + 1}`,
-      artist: artist || 'Various Artists',
-      decade: decade,
-      year: decade.split('–')[0] || 'Unknown',
-      url: 'https://youtube.com',
-      thumbnail: '',
-      isCustomPick: !!artist
-    });
-  }
-  
-  return songs;
 }
 
-// Get multiple recommendations (always returns exactly 5 songs)
+// Get multiple recommendations with strict official channel and decade filtering
 export async function getMultipleRecommendations(genre: string, decade: string, artist?: string): Promise<Song[]> {
+  console.log(`Getting recommendations for: ${genre}, ${decade}, ${artist || 'Various Artists'}`);
+  
+  if (!YOUTUBE_API_KEY) {
+    throw new Error('YouTube API key not configured. Please add your API key to use music recommendations.');
+  }
+
   try {
-    let allSongs: Song[] = [];
-    
-    // If artist is provided, try official channel search first
-    if (artist) {
-      try {
-        // Step 1: Find official artist channel
-        const channelId = await findOfficialChannel(artist);
-        
-        if (channelId) {
-          // Step 2: Search within official channel with increased results
-          const decadeKeywords = getDecadeKeywords(decade);
-          const channelQuery = `${genre} ${decadeKeywords}`;
-          
-          // Search with higher maxResults to get more songs
-          const params = new URLSearchParams({
-            part: 'snippet',
-            channelId: channelId,
-            q: channelQuery,
-            type: 'video',
-            videoCategoryId: '10',
-            maxResults: '15', // Get more results for filtering
-            order: 'relevance',
-            key: YOUTUBE_API_KEY || ''
-          });
+    // If no artist specified, we cannot guarantee official channels
+    if (!artist) {
+      throw new Error('Artist name is required for official channel recommendations');
+    }
 
-          const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
-          if (response.ok) {
-            const data = await response.json();
-            const channelResults = data.items || [];
-            
-            if (channelResults.length > 0) {
-              const songs = await parseYouTubeResults(channelResults, artist);
-              if (songs.length > 0) {
-                allSongs = songs.map(song => ({
-                  ...song,
-                  decade: decade,
-                  isOfficialSource: true
-                }));
-                console.log(`Found ${allSongs.length} official recommendations for ${artist}`);
-              }
-            }
-          }
-        }
-      } catch (channelError) {
-        console.warn('Official channel search failed:', channelError);
-      }
-    }
+    // Step 1: Find official artist channel
+    const channelId = await findOfficialChannel(artist);
     
-    // If we need more songs, use general search strategies
-    if (allSongs.length < 5) {
-      const queries = buildSearchQueries(genre, decade, artist);
-      
-      for (const query of queries) {
-        if (allSongs.length >= 5) break;
-        
-        try {
-          // Use higher maxResults for more options
-          const params = new URLSearchParams({
-            part: 'snippet',
-            q: query,
-            type: 'video',
-            videoCategoryId: '10',
-            maxResults: '15',
-            order: 'relevance',
-            key: YOUTUBE_API_KEY || ''
-          });
+    if (!channelId) {
+      // No official channel found - return empty array with error message
+      console.log(`No official channel found for ${artist}`);
+      return [];
+    }
 
-          const response = await fetch(`${YOUTUBE_SEARCH_URL}?${params}`);
-          if (response.ok) {
-            const data = await response.json();
-            const results = data.items || [];
-            const songs = await parseYouTubeResults(results, artist);
-            
-            // Add songs that aren't already in our list
-            for (const song of songs) {
-              if (allSongs.length >= 5) break;
-              if (!allSongs.some(existing => existing.url === song.url)) {
-                allSongs.push({
-                  ...song,
-                  decade: decade,
-                  isOfficialSource: false
-                });
-              }
-            }
-          }
-        } catch (apiError) {
-          console.warn(`Search strategy failed for query "${query}":`, apiError);
-          continue;
-        }
-      }
-    }
+    // Step 2: Search within official channel with decade filtering
+    const songs = await searchOfficialChannel(channelId, genre, decade, artist);
     
-    // If we still don't have enough songs, fill with fallbacks
-    if (allSongs.length < 5) {
-      const fallbackSongs = getFallbackSongs(genre, decade, artist);
-      const needed = 5 - allSongs.length;
-      allSongs.push(...fallbackSongs.slice(0, needed));
-    }
+    console.log(`Retrieved ${songs.length} official songs for ${artist} in ${decade}`);
     
-    // Ensure exactly 5 songs
-    return allSongs.slice(0, 5);
+    return songs;
     
   } catch (error) {
-    console.error('Error getting multiple recommendations:', error);
-    return getFallbackSongs(genre, decade, artist);
+    console.error('Error getting official recommendations:', error);
+    return [];
   }
 }
 
 // Legacy single recommendation function for backward compatibility
 export async function getRecommendation(genre: string, decade: string, artist?: string): Promise<Song> {
   const songs = await getMultipleRecommendations(genre, decade, artist);
+  
+  if (songs.length === 0) {
+    // Return a placeholder song indicating no official content found
+    return {
+      title: 'No Official Content Available',
+      artist: artist || 'Unknown Artist',
+      decade: decade,
+      year: decade.split('–')[0] || 'Unknown',
+      url: 'https://youtube.com',
+      thumbnail: '',
+      isOfficialSource: false
+    };
+  }
+  
   return songs[0];
 }
 
-// Reset recommendations history (useful for testing or new game sessions)
+// Reset recommendations history
 export function resetRecommendationHistory(): void {
   recommendedSongs.clear();
 }
 
-// Server proxy example (for reference)
-export const serverProxyExample = `
-// server.js - Node.js/Express example
-const express = require('express');
-const cors = require('cors');
-const app = express();
+// Validate decade format
+export function isValidDecade(decade: string): boolean {
+  const validDecades = [
+    '1950–1960', '1960–1970', '1970–1980', '1980–1990',
+    '1990–2000', '2000–2010', '2010–2020', '2020–Present'
+  ];
+  return validDecades.includes(decade);
+}
 
-app.use(cors());
-app.use(express.json());
-
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-
-app.get('/api/search', async (req, res) => {
-  try {
-    const { q } = req.query;
-    
-    const params = new URLSearchParams({
-      part: 'snippet',
-      q: q,
-      type: 'video',
-      videoCategoryId: '10',
-      maxResults: '5',
-      key: YOUTUBE_API_KEY
-    });
-
-    const response = await fetch(\`https://www.googleapis.com/youtube/v3/search?\${params}\`);
-    const data = await response.json();
-    
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.listen(3001, () => {
-  console.log('Music service running on port 3001');
-});
-`;
+// Get decade display name
+export function getDecadeDisplayName(decade: string): string {
+  return decade;
+}

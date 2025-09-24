@@ -133,21 +133,38 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       
       try {
         const songs = await getMultipleRecommendations(preferences.genre, preferences.decade, preferences.artist);
-        setCurrentSongs(songs);
+        
+        // Check if we got any official songs
+        if (songs.length === 0) {
+          // Show message about no official content
+          const noContentSong: Song = {
+            title: 'No Official Content Available',
+            artist: preferences.artist || 'Unknown Artist',
+            decade: preferences.decade,
+            year: preferences.decade.split('–')[0] || 'Unknown',
+            url: 'https://youtube.com',
+            thumbnail: '',
+            isOfficialSource: false
+          };
+          setCurrentSongs([noContentSong]);
+        } else {
+          setCurrentSongs(songs);
+        }
         setShowRecommendation(true);
       } catch (error) {
         console.error('Error getting recommendations:', error);
-        // Fallback songs
-        const fallbackSongs: Song[] = Array.from({ length: 5 }, (_, i) => ({
-          title: `Great Choice #${i + 1}`,
-          artist: preferences.artist || "Various Artists",
+        
+        // Show error message
+        const errorSong: Song = {
+          title: 'Error Loading Recommendations',
+          artist: preferences.artist || 'Unknown Artist',
           decade: preferences.decade,
-          year: preferences.decade.split('–')[0] || 'Unknown',
+          year: 'Unknown',
           url: "https://youtube.com",
           thumbnail: "",
-          isCustomPick: !!preferences.artist
-        }));
-        setCurrentSongs(fallbackSongs);
+          isOfficialSource: false
+        };
+        setCurrentSongs([errorSong]);
         setShowRecommendation(true);
       } finally {
         setIsLoadingSong(false);
