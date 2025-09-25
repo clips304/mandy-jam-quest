@@ -5,6 +5,7 @@ export interface Song {
   url: string;
   thumbnail: string;
   isCustomPick?: boolean;
+  isOfficialSource?: boolean; // Indicates if song is from verified artist channel
 }
 
 export interface GamePreferences {
