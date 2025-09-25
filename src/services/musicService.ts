@@ -1,15 +1,11 @@
 import { Song } from '../types/game';
 
 // Spotify API configuration
-const SPOTIFY_CLIENT_ID = '7a71a150881d4c68bf688b0b97b6b02a';
+const SPOTIFY_API_KEY = '7a71a150881d4c68bf688b0b97b6b02a';
 const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1';
 
 // Track recommended songs to prevent repeats
 const recommendedSongs = new Set<string>();
-
-// Spotify access token (for client credentials flow)
-let spotifyAccessToken: string | null = null;
-let tokenExpiryTime: number = 0;
 
 // Curated fallback library for when API fails or returns no results
 const curatedLibrary: Record<string, Record<string, Song[]>> = {
@@ -120,22 +116,40 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
   }
 };
 
-// Get Spotify access token using client credentials flow
-async function getSpotifyAccessToken(): Promise<string | null> {
-  // Check if token is still valid
-  if (spotifyAccessToken && Date.now() < tokenExpiryTime) {
-    return spotifyAccessToken;
-  }
-
+// Helper function to get Spotify recommendations
+async function getSpotifyRecommendations(genre: string, startYear: number, endYear: number, artist = ""): Promise<any[]> {
   try {
-    // Use the provided API key directly for requests
-    // Note: In production, proper OAuth with client secret would be required
-    spotifyAccessToken = SPOTIFY_CLIENT_ID;
-    tokenExpiryTime = Date.now() + 3600000; // 1 hour
-    return spotifyAccessToken;
+    // Build the search query
+    let query = `genre:"${genre}" year:${startYear}-${endYear}`;
+    if (artist && artist.trim() !== "") {
+      query += ` artist:"${artist}"`;
+    }
+
+    const url = `${SPOTIFY_BASE_URL}/search?q=${encodeURIComponent(query)}&type=track&limit=5`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${SPOTIFY_API_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Spotify API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.tracks || !data.tracks.items.length) {
+      return [];
+    }
+
+    // Map results to a simpler format
+    return data.tracks.items;
   } catch (error) {
-    console.warn('Failed to get Spotify access token:', error);
-    return null;
+    console.error("Error fetching Spotify tracks:", error);
+    return [];
   }
 }
 
@@ -156,63 +170,22 @@ function getDecadeYears(decade: string): { from: number; to: number } {
 
 // Search tracks from Spotify with genre, decade, and artist filters
 async function searchSpotifyTracks(genre: string, decade: string, artist?: string, limit: number = 5): Promise<any[]> {
-  const token = await getSpotifyAccessToken();
-  if (!token) {
-    return [];
-  }
-
   const decadeYears = getDecadeYears(decade);
-  let query = `genre:${genre.toLowerCase()}`;
-  
-  if (artist) {
-    query += ` artist:${artist}`;
-  }
-  
-  // Add year range filter
-  query += ` year:${decadeYears.from}-${decadeYears.to}`;
-
-  const params = new URLSearchParams({
-    q: query,
-    type: 'track',
-    limit: limit.toString(),
-    market: 'US'
-  });
-
-  try {
-    const response = await fetch(`${SPOTIFY_BASE_URL}/search?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Spotify API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.tracks?.items || [];
-  } catch (error) {
-    console.warn('Failed to search Spotify tracks:', error);
-    return [];
-  }
+  return await getSpotifyRecommendations(genre.toLowerCase(), decadeYears.from, decadeYears.to, artist || "");
 }
 
 // Get artist's top tracks from Spotify
 async function getArtistTopTracks(artistId: string, limit: number = 5): Promise<any[]> {
-  const token = await getSpotifyAccessToken();
-  if (!token) {
-    return [];
-  }
-
   try {
     const response = await fetch(`${SPOTIFY_BASE_URL}/artists/${artistId}/top-tracks?market=US`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        "Authorization": `Bearer ${SPOTIFY_API_KEY}`,
+        "Content-Type": "application/json"
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Spotify API error: ${response.status}`);
+      throw new Error(`Spotify API error: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -225,11 +198,6 @@ async function getArtistTopTracks(artistId: string, limit: number = 5): Promise<
 
 // Search for artist ID on Spotify
 async function searchArtistId(artistName: string): Promise<string | null> {
-  const token = await getSpotifyAccessToken();
-  if (!token) {
-    return null;
-  }
-
   const params = new URLSearchParams({
     q: artistName,
     type: 'artist',
@@ -239,7 +207,8 @@ async function searchArtistId(artistName: string): Promise<string | null> {
   try {
     const response = await fetch(`${SPOTIFY_BASE_URL}/search?${params}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        "Authorization": `Bearer ${SPOTIFY_API_KEY}`,
+        "Content-Type": "application/json"
       }
     });
 
