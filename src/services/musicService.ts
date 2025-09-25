@@ -128,10 +128,11 @@ async function getSpotifyAccessToken(): Promise<string | null> {
   }
 
   try {
-    // For demo purposes, we'll use a mock token approach since we don't have client secret
-    // In production, this would require proper OAuth flow
-    console.warn('Spotify API requires client secret for proper authentication. Using fallback data.');
-    return null;
+    // Use the provided API key directly for requests
+    // Note: In production, proper OAuth with client secret would be required
+    spotifyAccessToken = SPOTIFY_CLIENT_ID;
+    tokenExpiryTime = Date.now() + 3600000; // 1 hour
+    return spotifyAccessToken;
   } catch (error) {
     console.warn('Failed to get Spotify access token:', error);
     return null;
@@ -153,12 +154,22 @@ function getDecadeYears(decade: string): { from: number; to: number } {
   return decadeMap[decade] || { from: 2000, to: 2010 };
 }
 
-// Search tracks from Spotify
-async function searchSpotifyTracks(query: string, limit: number = 5): Promise<any[]> {
+// Search tracks from Spotify with genre, decade, and artist filters
+async function searchSpotifyTracks(genre: string, decade: string, artist?: string, limit: number = 5): Promise<any[]> {
   const token = await getSpotifyAccessToken();
   if (!token) {
     return [];
   }
+
+  const decadeYears = getDecadeYears(decade);
+  let query = `genre:${genre.toLowerCase()}`;
+  
+  if (artist) {
+    query += ` artist:${artist}`;
+  }
+  
+  // Add year range filter
+  query += ` year:${decadeYears.from}-${decadeYears.to}`;
 
   const params = new URLSearchParams({
     q: query,
@@ -322,39 +333,42 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
     let allTracks: any[] = [];
     const decadeYears = getDecadeYears(decade);
     
-    // If artist is provided, get their top tracks
-    if (artist) {
+    // Search using Spotify API with proper filters
+    const spotifyTracks = await searchSpotifyTracks(genre, decade, artist, 10);
+    
+    // Filter by decade to ensure accuracy
+    const filteredTracks = spotifyTracks.filter(track => {
+      if (!track.album?.release_date) return false;
+      const releaseYear = new Date(track.album.release_date).getFullYear();
+      return releaseYear >= decadeYears.from && releaseYear <= decadeYears.to;
+    });
+    
+    allTracks = filteredTracks.length > 0 ? filteredTracks : spotifyTracks;
+    
+    // If artist is provided but no results, try artist-specific search
+    if (artist && allTracks.length < 5) {
       const artistId = await searchArtistId(artist);
       if (artistId) {
         const artistTracks = await getArtistTopTracks(artistId, 10);
-        allTracks = artistTracks;
-        console.log(`Found ${allTracks.length} tracks for ${artist}`);
+        // Filter artist tracks by decade
+        const filteredArtistTracks = artistTracks.filter(track => {
+          if (!track.album?.release_date) return false;
+          const releaseYear = new Date(track.album.release_date).getFullYear();
+          return releaseYear >= decadeYears.from && releaseYear <= decadeYears.to;
+        });
+        
+        // Combine tracks, avoiding duplicates
+        const existingTrackIds = new Set(
+          allTracks.map(t => `${t.artists?.[0]?.name || ''}-${t.name || ''}`.toLowerCase())
+        );
+        
+        const newTracks = filteredArtistTracks.filter(t => {
+          const trackId = `${t.artists?.[0]?.name || ''}-${t.name || ''}`.toLowerCase();
+          return !existingTrackIds.has(trackId);
+        });
+        
+        allTracks.push(...newTracks);
       }
-    }
-    
-    // If we need more tracks or no artist provided, search by genre
-    if (allTracks.length < 5) {
-      const query = artist ? `${artist} ${genre}` : `genre:${genre}`;
-      const genreTracks = await searchSpotifyTracks(query, 10);
-      
-      // Filter by decade if possible
-      const filteredTracks = genreTracks.filter(track => {
-        if (!track.album?.release_date) return true;
-        const releaseYear = new Date(track.album.release_date).getFullYear();
-        return releaseYear >= decadeYears.from && releaseYear <= decadeYears.to;
-      });
-      
-      // Combine tracks, avoiding duplicates
-      const existingTrackIds = new Set(
-        allTracks.map(t => `${t.artists?.[0]?.name || ''}-${t.name || ''}`.toLowerCase())
-      );
-      
-      const newTracks = (filteredTracks.length > 0 ? filteredTracks : genreTracks).filter(t => {
-        const trackId = `${t.artists?.[0]?.name || ''}-${t.name || ''}`.toLowerCase();
-        return !existingTrackIds.has(trackId);
-      });
-      
-      allTracks.push(...newTracks);
     }
     
     // Convert tracks to Song objects
@@ -368,15 +382,15 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
       }
     }
     
-    // If we don't have enough songs, fill with fallbacks
-    if (songs.length < 5) {
-      const fallbackSongs = getFallbackSongs(genre, decade, artist);
-      const needed = 5 - songs.length;
-      songs.push(...fallbackSongs.slice(0, needed));
+    // If we have no songs from Spotify, use fallback
+    if (songs.length === 0) {
+      console.warn(`No songs found for ${genre} ${decade} ${artist || ''} - using fallback`);
+      return getFallbackSongs(genre, decade, artist);
     }
     
-    // Ensure exactly 5 songs
-    return songs.slice(0, 5);
+    // If we have fewer than 5 songs, that's okay - return what we have
+    console.log(`Found ${songs.length} songs for ${genre} ${decade} ${artist || ''}`);
+    return songs;
     
   } catch (error) {
     console.error('Error getting multiple recommendations:', error);

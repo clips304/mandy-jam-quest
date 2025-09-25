@@ -24,7 +24,7 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
     onAddToPlaylist(song);
   };
 
-  const handlePlayOnYouTube = (song: Song) => {
+  const handlePlayOnSpotify = (song: Song) => {
     window.open(song.url, '_blank', 'noopener,noreferrer');
   };
 
@@ -95,13 +95,13 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                   {/* Song Actions */}
                   <div className="flex gap-2 mt-4">
                     <Button
-                      onClick={() => handlePlayOnYouTube(song)}
+                      onClick={() => handlePlayOnSpotify(song)}
                       variant="game"
                       size="sm"
                       className="flex-1"
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Play
+                      Play on Spotify
                     </Button>
                     
                     <Button
@@ -120,7 +120,13 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
 
           {/* Message */}
           <div className="text-center text-sm text-muted-foreground">
-            <p>🎵 Here are {songs.length} songs matching your taste!</p>
+            {songs.length === 0 ? (
+              <p>❌ No songs found for this genre/decade/artist — try adjusting your filters.</p>
+            ) : songs.length < 5 ? (
+              <p>🎵 Only {songs.length} songs found for this decade and genre.</p>
+            ) : (
+              <p>🎵 Here are {songs.length} songs matching your taste!</p>
+            )}
             <p className="mt-1">Ready for the next level?</p>
           </div>
 
