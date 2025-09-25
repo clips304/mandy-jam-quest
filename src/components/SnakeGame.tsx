@@ -156,10 +156,70 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
 
   // Game loop
   const gameTick = useCallback(() => {
-    if (gameState === 'playing') {
-      moveSnake();
-    }
-  }, [gameState, moveSnake]);
+    if (gameState !== 'playing') return;
+    
+    setSnake(currentSnake => {
+      const newSnake = [...currentSnake];
+      const head = { ...newSnake[0] };
+      
+      // Update direction
+      setDirection(nextDirection);
+      
+      // Move head
+      switch (nextDirection) {
+        case 'UP':
+          head.y -= 1;
+          break;
+        case 'DOWN':
+          head.y += 1;
+          break;
+        case 'LEFT':
+          head.x -= 1;
+          break;
+        case 'RIGHT':
+          head.x += 1;
+          break;
+      }
+      
+      // Check collision with walls
+      if (head.x < 0 || head.x >= CANVAS_SIZE / GRID_SIZE || 
+          head.y < 0 || head.y >= CANVAS_SIZE / GRID_SIZE) {
+        setGameState('gameover');
+        return currentSnake;
+      }
+      
+      // Check self collision
+      if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        setGameState('gameover');
+        return currentSnake;
+      }
+      
+      newSnake.unshift(head);
+      
+      // Check food collision
+      setFood(currentFood => {
+        if (head.x === currentFood.x && head.y === currentFood.y) {
+          setScore(prev => prev + 1);
+          
+          // Generate new food
+          let newFood: Position;
+          do {
+            newFood = {
+              x: Math.floor(Math.random() * (CANVAS_SIZE / GRID_SIZE)),
+              y: Math.floor(Math.random() * (CANVAS_SIZE / GRID_SIZE))
+            };
+          } while (newSnake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+          
+          return newFood;
+        } else {
+          newSnake.pop();
+          return currentFood;
+        }
+      });
+      
+      return newSnake;
+    });
+  }, [gameState, nextDirection]);
 
   // Start game loop
   const startGameLoop = useCallback(() => {
@@ -325,10 +385,20 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
     );
   }, [snake, food]);
 
-  // Initialize game
+  // Start game loop when state changes to playing
   useEffect(() => {
-    resetSnake();
-  }, [resetSnake]);
+    if (gameState === 'playing') {
+      startGameLoop();
+    } else if (gameLoopRef.current) {
+      clearInterval(gameLoopRef.current);
+    }
+    
+    return () => {
+      if (gameLoopRef.current) {
+        clearInterval(gameLoopRef.current);
+      }
+    };
+  }, [gameState, startGameLoop]);
 
   return (
     <div className="min-h-screen p-4">
