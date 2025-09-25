@@ -1,7 +1,7 @@
 import { Song } from '../types/game';
 
 // Spotify API configuration
-const SPOTIFY_CLIENT_ID = '6798ca439567684387458bd928ce643c';
+const SPOTIFY_CLIENT_ID = '7a71a150881d4c68bf688b0b97b6b02a';
 const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1';
 
 // Track recommended songs to prevent repeats
