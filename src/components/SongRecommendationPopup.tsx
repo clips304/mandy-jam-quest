@@ -6,7 +6,7 @@ import { ExternalLink, Plus, Play, RotateCcw, Sparkles } from 'lucide-react';
 import { Song } from '../types/game';
 
 interface SongRecommendationPopupProps {
-  song: Song;
+  songs: Song[];
   level: number;
   onNextLevel: () => void;
   onRestart: () => void;
@@ -14,17 +14,17 @@ interface SongRecommendationPopupProps {
 }
 
 const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
-  song,
+  songs,
   level,
   onNextLevel,
   onRestart,
   onAddToPlaylist
 }) => {
-  const handleAddToPlaylist = () => {
+  const handleAddToPlaylist = (song: Song) => {
     onAddToPlaylist(song);
   };
 
-  const handlePlayOnYouTube = () => {
+  const handlePlayOnYouTube = (song: Song) => {
     window.open(song.url, '_blank', 'noopener,noreferrer');
   };
 
@@ -38,71 +38,89 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Song Card */}
-          <Card className="glass-effect border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                {song.thumbnail ? (
-                  <img
-                    src={song.thumbnail}
-                    alt={song.title}
-                    className="w-16 h-16 rounded-lg object-cover shadow-game"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg gradient-secondary flex items-center justify-center shadow-game">
-                    <Play className="w-6 h-6 text-white" />
-                  </div>
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground mb-1 truncate">
-                    {song.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-1 truncate">
-                    {song.artist}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{song.decade}</span>
-                    {song.isCustomPick && (
-                      <>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-neon-purple">
-                          <Sparkles className="w-3 h-3" />
-                          Custom Pick
-                        </span>
-                      </>
+          {/* Song Cards */}
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {songs.map((song, index) => (
+              <Card key={index} className="glass-effect border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    {song.thumbnail ? (
+                      <img
+                        src={song.thumbnail}
+                        alt={song.title}
+                        className="w-16 h-16 rounded-lg object-cover shadow-game flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg gradient-secondary flex items-center justify-center shadow-game flex-shrink-0">
+                        <Play className="w-6 h-6 text-white" />
+                      </div>
                     )}
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground mb-1 truncate">
+                        {song.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-1 truncate">
+                        {song.artist}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{song.year}</span>
+                        <span>•</span>
+                        <span>{song.decade}</span>
+                        {song.isCustomPick && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-neon-purple">
+                              <Sparkles className="w-3 h-3" />
+                              Custom
+                            </span>
+                          </>
+                        )}
+                        {song.isOfficialSource && (
+                          <>
+                            <span>•</span>
+                            <span className="text-green-400">Official</span>
+                          </>
+                        )}
+                        {song.isOfficialSource === false && (
+                          <>
+                            <span>•</span>
+                            <span className="text-yellow-400">Unofficial</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Song Actions */}
-              <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={handlePlayOnYouTube}
-                  variant="game"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Play on YouTube
-                </Button>
-                
-                <Button
-                  onClick={handleAddToPlaylist}
-                  variant="secondary"
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add to Playlist
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  {/* Song Actions */}
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      onClick={() => handlePlayOnYouTube(song)}
+                      variant="game"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Play
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleAddToPlaylist(song)}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
           {/* Message */}
           <div className="text-center text-sm text-muted-foreground">
-            <p>🎵 This song matches your taste for <strong>{song.decade}</strong> music!</p>
+            <p>🎵 Here are {songs.length} songs matching your taste!</p>
             <p className="mt-1">Ready for the next level?</p>
           </div>
 
