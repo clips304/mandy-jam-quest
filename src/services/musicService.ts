@@ -393,90 +393,148 @@ function getFallbackSongs(genre: string, decade: string, artist?: string): Song[
   return songs;
 }
 
-// Get recommendations ONLY from official verified channels
+// Official Channel API functions matching the user's exact requirements
+async function getOfficialChannelId(artistName: string): Promise<string | null> {
+  if (!YOUTUBE_API_KEY) return null;
+  
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(artistName + " official")}&key=${YOUTUBE_API_KEY}`;
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    
+    const data = await res.json();
+    if (data.items && data.items.length > 0) {
+      return data.items[0].id.channelId; // first likely official channel
+    }
+    return null;
+  } catch (error) {
+    console.error('Error finding official channel:', error);
+    return null;
+  }
+}
+
+async function getOfficialVideos(channelId: string, genre: string, startYear: number, endYear: number): Promise<any[]> {
+  if (!YOUTUBE_API_KEY) return [];
+  
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&videoCategoryId=10&maxResults=5&order=relevance&q=${encodeURIComponent(genre)}&publishedAfter=${startYear}-01-01T00:00:00Z&publishedBefore=${endYear}-12-31T23:59:59Z&key=${YOUTUBE_API_KEY}`;
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    return data.items || [];
+  } catch (error) {
+    console.error('Error getting official videos:', error);
+    return [];
+  }
+}
+
+// Enhanced recommendation system with strict official-only policy
 export async function getMultipleRecommendations(genre: string, decade: string, artist?: string): Promise<Song[]> {
   console.log(`🎵 Getting official recommendations for: ${artist || 'Various Artists'} - ${genre} - ${decade}`);
   
-  let officialSongs: Song[] = [];
+  // Parse decade to get year range
+  const [startYear, endYear] = decade.split('–').map(year => 
+    year === 'Present' ? new Date().getFullYear() : parseInt(year)
+  );
   
-  // STRICT RULE: Only return songs from verified official channels
+  let result: Song[] = [];
+  let errorMessage = '';
+  
   if (artist) {
     try {
-      // Step 1: Find verified official channel
-      const channelResult = await findOfficialChannel(artist);
+      // Step 1: Find official channel
+      const channelId = await getOfficialChannelId(artist);
       
-      if (channelResult) {
-        console.log(`✅ Found official channel for ${artist}: ${channelResult.channelId}`);
-        
-        // Step 2: Search within official channel with decade filtering
-        const officialVideos = await searchInOfficialChannel(
-          channelResult.channelId, 
-          genre, 
-          decade
-        );
-        
-        if (officialVideos.length > 0) {
-          console.log(`🎬 Found ${officialVideos.length} videos in official channel`);
-          
-          // Step 3: Parse to Song format
-          officialSongs = parseOfficialChannelResults(officialVideos, artist, decade);
-          
-          console.log(`🎶 Parsed ${officialSongs.length} official songs`);
-        } else {
-          console.log(`❌ No videos found in official channel for ${genre} ${decade}`);
-        }
-      } else {
-        console.log(`❌ No verified official channel found for ${artist}`);
+      if (!channelId) {
+        console.log(`❌ No official channel found for ${artist}`);
+        errorMessage = `No official YouTube channel found for ${artist}.`;
+        // Return error song to display message
+        return [{
+          title: errorMessage,
+          artist: '',
+          decade: '',
+          year: '',
+          url: '',
+          thumbnail: '',
+          isError: true
+        }];
       }
-    } catch (error) {
-      console.error('Error searching official channel:', error);
-    }
-  }
-  
-  // If we have less than 5 official songs, fill with curated fallbacks
-  if (officialSongs.length < 5) {
-    console.log(`📚 Using fallback songs - got ${officialSongs.length}/5 official songs`);
-    
-    const fallbackSongs = getFallbackSongs(genre, decade, artist);
-    const needed = 5 - officialSongs.length;
-    
-    // Add fallbacks that aren't duplicates
-    for (let i = 0; i < fallbackSongs.length && officialSongs.length < 5; i++) {
-      const fallback = fallbackSongs[i];
-      const isDuplicate = officialSongs.some(existing => 
-        existing.title.toLowerCase() === fallback.title.toLowerCase() ||
-        existing.url === fallback.url
-      );
       
-      if (!isDuplicate) {
-        officialSongs.push({
-          ...fallback,
-          isOfficialSource: false // Mark as fallback
+      console.log(`✅ Found official channel for ${artist}: ${channelId}`);
+      
+      // Step 2: Get videos from official channel
+      const videos = await getOfficialVideos(channelId, genre, startYear, endYear);
+      
+      if (videos.length === 0) {
+        console.log(`❌ No videos found in official channel for ${genre} ${decade}`);
+        errorMessage = `Only 0 official songs found for this decade.`;
+        return [{
+          title: errorMessage,
+          artist: '',
+          decade: '',
+          year: '',
+          url: '',
+          thumbnail: '',
+          isError: true
+        }];
+      }
+      
+      // Step 3: Convert to Song format
+      result = videos.map((video: any) => ({
+        title: video.snippet.title.replace(/\s*\(Official.*?\)/gi, '').replace(/\s*\[Official.*?\]/gi, '').trim(),
+        artist: video.snippet.channelTitle,
+        year: video.snippet.publishedAt.split("-")[0],
+        url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
+        thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.medium?.url || '',
+        decade: decade,
+        isOfficialSource: true
+      }));
+      
+      console.log(`🎶 Found ${result.length} official songs`);
+      
+      // If fewer than 5, show appropriate message
+      if (result.length < 5) {
+        result.unshift({
+          title: `Only ${result.length} official songs found for this decade.`,
+          artist: '',
+          decade: '',
+          year: '',
+          url: '',
+          thumbnail: '',
+          isError: true
         });
       }
+      
+    } catch (error) {
+      console.error('Error getting official recommendations:', error);
+      return [{
+        title: 'Error fetching official songs. Please try again.',
+        artist: '',
+        decade: '',
+        year: '',
+        url: '',
+        thumbnail: '',
+        isError: true
+      }];
     }
-  }
-  
-  // Ensure exactly 5 songs
-  const finalSongs = officialSongs.slice(0, 5);
-  
-  // Fill remaining slots if needed
-  while (finalSongs.length < 5) {
-    finalSongs.push({
-      title: `${genre} Classic #${finalSongs.length + 1}`,
-      artist: artist || 'Various Artists',
-      decade: decade,
-      year: decade.split('–')[0] || '2000',
-      url: 'https://youtube.com',
+  } else {
+    // No artist specified - show message
+    result = [{
+      title: 'Please specify an artist to get official recommendations.',
+      artist: '',
+      decade: '',
+      year: '',
+      url: '',
       thumbnail: '',
-      isOfficialSource: false,
-      isCustomPick: true
-    });
+      isError: true
+    }];
   }
   
-  console.log(`🎯 Returning ${finalSongs.length} recommendations (${finalSongs.filter(s => s.isOfficialSource).length} official)`);
-  
-  return finalSongs;
+  console.log(`🎯 Returning ${result.length} recommendations`);
+  return result;
 }
 
 // Legacy single recommendation function for backward compatibility
