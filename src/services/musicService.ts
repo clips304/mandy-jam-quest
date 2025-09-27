@@ -4,6 +4,7 @@ import { Song } from '../types/game';
 const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_CHANNELS_URL = 'https://www.googleapis.com/youtube/v3/channels';
+const YOUTUBE_PLAYLIST_ITEMS_URL = 'https://www.googleapis.com/youtube/v3/playlistItems';
 
 // Track recommended songs to prevent repeats
 const recommendedSongs = new Set<string>();
@@ -393,136 +394,103 @@ function getFallbackSongs(genre: string, decade: string, artist?: string): Song[
   return songs;
 }
 
-// Official Channel API functions matching the user's exact requirements
+// Get official channel ID using search.list
 async function getOfficialChannelId(artistName: string): Promise<string | null> {
   if (!YOUTUBE_API_KEY) return null;
   
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(artistName + " official")}&key=${YOUTUBE_API_KEY}`;
+  const url = `${YOUTUBE_SEARCH_URL}?part=snippet&type=channel&q=${encodeURIComponent(artistName + " official")}&key=${YOUTUBE_API_KEY}`;
   
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
     
     const data = await res.json();
-    if (data.items && data.items.length > 0) {
-      return data.items[0].id.channelId; // first likely official channel
-    }
-    return null;
+    return data.items?.[0]?.id?.channelId || null;
   } catch (error) {
     console.error('Error finding official channel:', error);
     return null;
   }
 }
 
-async function getOfficialVideos(channelId: string, genre: string, startYear: number, endYear: number): Promise<any[]> {
-  if (!YOUTUBE_API_KEY) return [];
+// Get uploads playlist ID from channel
+async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
+  if (!YOUTUBE_API_KEY) return null;
   
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&videoCategoryId=10&maxResults=5&order=relevance&q=${encodeURIComponent(genre)}&publishedAfter=${startYear}-01-01T00:00:00Z&publishedBefore=${endYear}-12-31T23:59:59Z&key=${YOUTUBE_API_KEY}`;
+  const url = `${YOUTUBE_CHANNELS_URL}?part=contentDetails&id=${channelId}&key=${YOUTUBE_API_KEY}`;
   
   try {
     const res = await fetch(url);
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     
     const data = await res.json();
-    return data.items || [];
+    return data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads || null;
+  } catch (error) {
+    console.error('Error getting uploads playlist:', error);
+    return null;
+  }
+}
+
+// Get all uploads from channel's uploads playlist and filter locally
+async function getOfficialVideos(artistName: string, genre: string, startYear: number, endYear: number): Promise<Song[]> {
+  if (!YOUTUBE_API_KEY) return [];
+
+  try {
+    // Step 1: Get official channel ID
+    const channelId = await getOfficialChannelId(artistName);
+    if (!channelId) return [];
+
+    // Step 2: Get uploads playlist ID
+    const uploadsPlaylistId = await getUploadsPlaylistId(channelId);
+    if (!uploadsPlaylistId) return [];
+
+    // Step 3: Get all uploads (up to 50 for filtering)
+    const url = `${YOUTUBE_PLAYLIST_ITEMS_URL}?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&key=${YOUTUBE_API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const items = data.items || [];
+
+    // Step 4: Filter locally by year and genre
+    const filtered = items.filter((item: any) => {
+      const year = parseInt(item.snippet.publishedAt.split("-")[0], 10);
+      const title = item.snippet.title.toLowerCase();
+      const description = (item.snippet.description || '').toLowerCase();
+      
+      // Filter by year range
+      const inYearRange = year >= startYear && year <= endYear;
+      
+      // Filter by genre (if provided) - check title and description
+      const matchesGenre = !genre || 
+        title.includes(genre.toLowerCase()) || 
+        description.includes(genre.toLowerCase());
+      
+      return inYearRange && matchesGenre;
+    });
+
+    // Step 5: Convert to Song format and return up to 5
+    return filtered.slice(0, 5).map((item: any) => ({
+      title: item.snippet.title.replace(/\s*\(Official.*?\)/gi, '').replace(/\s*\[Official.*?\]/gi, '').trim(),
+      artist: item.snippet.channelTitle,
+      year: item.snippet.publishedAt.split("-")[0],
+      decade: `${startYear}–${endYear}`,
+      url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
+      thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || '',
+      isOfficialSource: true
+    }));
+
   } catch (error) {
     console.error('Error getting official videos:', error);
     return [];
   }
 }
 
-// Enhanced recommendation system with strict official-only policy
+// Main recommendation function using uploads playlist approach
 export async function getMultipleRecommendations(genre: string, decade: string, artist?: string): Promise<Song[]> {
   console.log(`🎵 Getting official recommendations for: ${artist || 'Various Artists'} - ${genre} - ${decade}`);
   
-  // Parse decade to get year range
-  const [startYear, endYear] = decade.split('–').map(year => 
-    year === 'Present' ? new Date().getFullYear() : parseInt(year)
-  );
-  
-  let result: Song[] = [];
-  let errorMessage = '';
-  
-  if (artist) {
-    try {
-      // Step 1: Find official channel
-      const channelId = await getOfficialChannelId(artist);
-      
-      if (!channelId) {
-        console.log(`❌ No official channel found for ${artist}`);
-        errorMessage = `No official YouTube channel found for ${artist}.`;
-        // Return error song to display message
-        return [{
-          title: errorMessage,
-          artist: '',
-          decade: '',
-          year: '',
-          url: '',
-          thumbnail: '',
-          isError: true
-        }];
-      }
-      
-      console.log(`✅ Found official channel for ${artist}: ${channelId}`);
-      
-      // Step 2: Get videos from official channel
-      const videos = await getOfficialVideos(channelId, genre, startYear, endYear);
-      
-      if (videos.length === 0) {
-        console.log(`❌ No videos found in official channel for ${genre} ${decade}`);
-        errorMessage = `Only 0 official songs found for this decade.`;
-        return [{
-          title: errorMessage,
-          artist: '',
-          decade: '',
-          year: '',
-          url: '',
-          thumbnail: '',
-          isError: true
-        }];
-      }
-      
-      // Step 3: Convert to Song format
-      result = videos.map((video: any) => ({
-        title: video.snippet.title.replace(/\s*\(Official.*?\)/gi, '').replace(/\s*\[Official.*?\]/gi, '').trim(),
-        artist: video.snippet.channelTitle,
-        year: video.snippet.publishedAt.split("-")[0],
-        url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
-        thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.medium?.url || '',
-        decade: decade,
-        isOfficialSource: true
-      }));
-      
-      console.log(`🎶 Found ${result.length} official songs`);
-      
-      // If fewer than 5, show appropriate message
-      if (result.length < 5) {
-        result.unshift({
-          title: `Only ${result.length} official songs found for this decade.`,
-          artist: '',
-          decade: '',
-          year: '',
-          url: '',
-          thumbnail: '',
-          isError: true
-        });
-      }
-      
-    } catch (error) {
-      console.error('Error getting official recommendations:', error);
-      return [{
-        title: 'Error fetching official songs. Please try again.',
-        artist: '',
-        decade: '',
-        year: '',
-        url: '',
-        thumbnail: '',
-        isError: true
-      }];
-    }
-  } else {
-    // No artist specified - show message
-    result = [{
+  if (!artist) {
+    return [{
       title: 'Please specify an artist to get official recommendations.',
       artist: '',
       decade: '',
@@ -532,9 +500,57 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
       isError: true
     }];
   }
-  
-  console.log(`🎯 Returning ${result.length} recommendations`);
-  return result;
+
+  // Parse decade to get year range
+  const [startYear, endYear] = decade.split('–').map(year => 
+    year === 'Present' ? new Date().getFullYear() : parseInt(year)
+  );
+
+  try {
+    const songs = await getOfficialVideos(artist, genre, startYear, endYear);
+    
+    if (songs.length === 0) {
+      // Check if no official channel was found vs no songs in timeframe
+      const channelId = await getOfficialChannelId(artist);
+      
+      if (!channelId) {
+        return [{
+          title: `No official YouTube channel found for ${artist}.`,
+          artist: '',
+          decade: '',
+          year: '',
+          url: '',
+          thumbnail: '',
+          isError: true
+        }];
+      } else {
+        return [{
+          title: `No official songs found for this artist in this decade.`,
+          artist: '',
+          decade: '',
+          year: '',
+          url: '',
+          thumbnail: '',
+          isError: true
+        }];
+      }
+    }
+
+    console.log(`🎶 Found ${songs.length} official songs`);
+    return songs;
+
+  } catch (error) {
+    console.error('Error getting official recommendations:', error);
+    return [{
+      title: 'Error fetching official songs. Please try again.',
+      artist: '',
+      decade: '',
+      year: '',
+      url: '',
+      thumbnail: '',
+      isError: true
+    }];
+  }
 }
 
 // Legacy single recommendation function for backward compatibility

@@ -111,8 +111,8 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                           size="sm"
                           className="flex-1"
                         >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Play on YouTube
+                          <Play className="w-4 h-4 mr-2" />
+                          Play Song
                         </Button>
                         
                         <Button
