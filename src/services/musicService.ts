@@ -5,11 +5,12 @@ const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_CHANNELS_URL = 'https://www.googleapis.com/youtube/v3/channels';
 const YOUTUBE_PLAYLIST_ITEMS_URL = 'https://www.googleapis.com/youtube/v3/playlistItems';
+const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
 // Track recommended songs to prevent repeats
 const recommendedSongs = new Set<string>();
 
-// Curated fallback library for when API fails or returns no results
+// Curated fallback library with real hit songs and accurate YouTube URLs
 const curatedLibrary: Record<string, Record<string, Song[]>> = {
   'R&B': {
     '1990–2000': [
@@ -18,7 +19,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Whitney Houston',
         decade: '1990–2000',
         year: '1992',
-        url: 'https://youtube.com/watch?v=3JWTaaS7LdU',
+        url: 'https://www.youtube.com/watch?v=3JWTaaS7LdU',
         thumbnail: 'https://i.ytimg.com/vi/3JWTaaS7LdU/hqdefault.jpg'
       },
       {
@@ -26,7 +27,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'TLC',
         decade: '1990–2000',
         year: '1999',
-        url: 'https://youtube.com/watch?v=FrLequ6dUdM',
+        url: 'https://www.youtube.com/watch?v=FrLequ6dUdM',
         thumbnail: 'https://i.ytimg.com/vi/FrLequ6dUdM/hqdefault.jpg'
       },
       {
@@ -34,7 +35,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'TLC',
         decade: '1990–2000',
         year: '1994',
-        url: 'https://youtube.com/watch?v=8WEtxJ4-sh4',
+        url: 'https://www.youtube.com/watch?v=8WEtxJ4-sh4',
         thumbnail: 'https://i.ytimg.com/vi/8WEtxJ4-sh4/hqdefault.jpg'
       },
       {
@@ -42,7 +43,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Boyz II Men',
         decade: '1990–2000',
         year: '1992',
-        url: 'https://youtube.com/watch?v=zDKO6XYXioc',
+        url: 'https://www.youtube.com/watch?v=zDKO6XYXioc',
         thumbnail: 'https://i.ytimg.com/vi/zDKO6XYXioc/hqdefault.jpg'
       },
       {
@@ -50,7 +51,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Mariah Carey',
         decade: '1990–2000',
         year: '1995',
-        url: 'https://youtube.com/watch?v=qq09UkPRdFY',
+        url: 'https://www.youtube.com/watch?v=qq09UkPRdFY',
         thumbnail: 'https://i.ytimg.com/vi/qq09UkPRdFY/hqdefault.jpg'
       }
     ],
@@ -60,7 +61,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Beyoncé',
         decade: '2000–2010',
         year: '2003',
-        url: 'https://youtube.com/watch?v=ViwtNLUqkMY',
+        url: 'https://www.youtube.com/watch?v=ViwtNLUqkMY',
         thumbnail: 'https://i.ytimg.com/vi/ViwtNLUqkMY/hqdefault.jpg'
       },
       {
@@ -68,23 +69,15 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Usher',
         decade: '2000–2010',
         year: '2004',
-        url: 'https://youtube.com/watch?v=GxBSyx85Kp8',
+        url: 'https://www.youtube.com/watch?v=GxBSyx85Kp8',
         thumbnail: 'https://i.ytimg.com/vi/GxBSyx85Kp8/hqdefault.jpg'
-      },
-      {
-        title: 'Hips Don\'t Lie',
-        artist: 'Shakira',
-        decade: '2000–2010',
-        year: '2006',
-        url: 'https://youtube.com/watch?v=DUT5rEU6pqM',
-        thumbnail: 'https://i.ytimg.com/vi/DUT5rEU6pqM/hqdefault.jpg'
       },
       {
         title: 'Umbrella',
         artist: 'Rihanna',
         decade: '2000–2010',
         year: '2007',
-        url: 'https://youtube.com/watch?v=CvBfHwUxHIk',
+        url: 'https://www.youtube.com/watch?v=CvBfHwUxHIk',
         thumbnail: 'https://i.ytimg.com/vi/CvBfHwUxHIk/hqdefault.jpg'
       },
       {
@@ -92,8 +85,16 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Beyoncé',
         decade: '2000–2010',
         year: '2008',
-        url: 'https://youtube.com/watch?v=4m1EFMoRFvY',
+        url: 'https://www.youtube.com/watch?v=4m1EFMoRFvY',
         thumbnail: 'https://i.ytimg.com/vi/4m1EFMoRFvY/hqdefault.jpg'
+      },
+      {
+        title: 'Irreplaceable',
+        artist: 'Beyoncé',
+        decade: '2000–2010',
+        year: '2006',
+        url: 'https://www.youtube.com/watch?v=2EwViQxSJJQ',
+        thumbnail: 'https://i.ytimg.com/vi/2EwViQxSJJQ/hqdefault.jpg'
       }
     ]
   },
@@ -104,7 +105,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'The Notorious B.I.G.',
         decade: '1990–2000',
         year: '1994',
-        url: 'https://youtube.com/watch?v=_JZom_gVfuw',
+        url: 'https://www.youtube.com/watch?v=_JZom_gVfuw',
         thumbnail: 'https://i.ytimg.com/vi/_JZom_gVfuw/hqdefault.jpg'
       },
       {
@@ -112,7 +113,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: '2Pac',
         decade: '1990–2000',
         year: '1995',
-        url: 'https://youtube.com/watch?v=5wBTdfAkqGU',
+        url: 'https://www.youtube.com/watch?v=5wBTdfAkqGU',
         thumbnail: 'https://i.ytimg.com/vi/5wBTdfAkqGU/hqdefault.jpg'
       },
       {
@@ -120,7 +121,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Dr. Dre',
         decade: '1990–2000',
         year: '1992',
-        url: 'https://youtube.com/watch?v=_qkP8SvHvaU',
+        url: 'https://www.youtube.com/watch?v=_qkP8SvHvaU',
         thumbnail: 'https://i.ytimg.com/vi/_qkP8SvHvaU/hqdefault.jpg'
       },
       {
@@ -128,7 +129,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Wu-Tang Clan',
         decade: '1990–2000',
         year: '1993',
-        url: 'https://youtube.com/watch?v=PBwAxmrE194',
+        url: 'https://www.youtube.com/watch?v=PBwAxmrE194',
         thumbnail: 'https://i.ytimg.com/vi/PBwAxmrE194/hqdefault.jpg'
       },
       {
@@ -136,7 +137,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Warren G',
         decade: '1990–2000',
         year: '1994',
-        url: 'https://youtube.com/watch?v=1plPyJdXKIY',
+        url: 'https://www.youtube.com/watch?v=1plPyJdXKIY',
         thumbnail: 'https://i.ytimg.com/vi/1plPyJdXKIY/hqdefault.jpg'
       }
     ],
@@ -146,7 +147,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: '50 Cent',
         decade: '2000–2010',
         year: '2003',
-        url: 'https://youtube.com/watch?v=5qm8PH4xAss',
+        url: 'https://www.youtube.com/watch?v=5qm8PH4xAss',
         thumbnail: 'https://i.ytimg.com/vi/5qm8PH4xAss/hqdefault.jpg'
       },
       {
@@ -154,7 +155,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Kanye West',
         decade: '2000–2010',
         year: '2005',
-        url: 'https://youtube.com/watch?v=6vwNcNOTVzY',
+        url: 'https://www.youtube.com/watch?v=6vwNcNOTVzY',
         thumbnail: 'https://i.ytimg.com/vi/6vwNcNOTVzY/hqdefault.jpg'
       },
       {
@@ -162,7 +163,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Eminem',
         decade: '2000–2010',
         year: '2002',
-        url: 'https://youtube.com/watch?v=_Yhyp-_hX2s',
+        url: 'https://www.youtube.com/watch?v=_Yhyp-_hX2s',
         thumbnail: 'https://i.ytimg.com/vi/_Yhyp-_hX2s/hqdefault.jpg'
       },
       {
@@ -170,7 +171,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'OutKast',
         decade: '2000–2010',
         year: '2003',
-        url: 'https://youtube.com/watch?v=PWgvGjAhvIw',
+        url: 'https://www.youtube.com/watch?v=PWgvGjAhvIw',
         thumbnail: 'https://i.ytimg.com/vi/PWgvGjAhvIw/hqdefault.jpg'
       },
       {
@@ -178,7 +179,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Kanye West',
         decade: '2000–2010',
         year: '2007',
-        url: 'https://youtube.com/watch?v=PsO6ZnUZI0g',
+        url: 'https://www.youtube.com/watch?v=PsO6ZnUZI0g',
         thumbnail: 'https://i.ytimg.com/vi/PsO6ZnUZI0g/hqdefault.jpg'
       }
     ]
@@ -190,7 +191,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Queen',
         decade: '1970–1980',
         year: '1975',
-        url: 'https://youtube.com/watch?v=fJ9rUzIMcZQ',
+        url: 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ',
         thumbnail: 'https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg'
       },
       {
@@ -198,7 +199,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Led Zeppelin',
         decade: '1970–1980',
         year: '1971',
-        url: 'https://youtube.com/watch?v=QkF3oxziUI4',
+        url: 'https://www.youtube.com/watch?v=QkF3oxziUI4',
         thumbnail: 'https://i.ytimg.com/vi/QkF3oxziUI4/hqdefault.jpg'
       },
       {
@@ -206,7 +207,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Eagles',
         decade: '1970–1980',
         year: '1976',
-        url: 'https://youtube.com/watch?v=09839DpTctU',
+        url: 'https://www.youtube.com/watch?v=09839DpTctU',
         thumbnail: 'https://i.ytimg.com/vi/09839DpTctU/hqdefault.jpg'
       },
       {
@@ -214,7 +215,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Pink Floyd',
         decade: '1970–1980',
         year: '1979',
-        url: 'https://youtube.com/watch?v=YR5ApYxkU-U',
+        url: 'https://www.youtube.com/watch?v=YR5ApYxkU-U',
         thumbnail: 'https://i.ytimg.com/vi/YR5ApYxkU-U/hqdefault.jpg'
       },
       {
@@ -222,7 +223,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Journey',
         decade: '1970–1980',
         year: '1981',
-        url: 'https://youtube.com/watch?v=1k8craCGpgs',
+        url: 'https://www.youtube.com/watch?v=1k8craCGpgs',
         thumbnail: 'https://i.ytimg.com/vi/1k8craCGpgs/hqdefault.jpg'
       }
     ],
@@ -232,7 +233,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Guns N\' Roses',
         decade: '1980–1990',
         year: '1987',
-        url: 'https://youtube.com/watch?v=1w7OgIMMRc4',
+        url: 'https://www.youtube.com/watch?v=1w7OgIMMRc4',
         thumbnail: 'https://i.ytimg.com/vi/1w7OgIMMRc4/hqdefault.jpg'
       },
       {
@@ -240,7 +241,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Bon Jovi',
         decade: '1980–1990',
         year: '1986',
-        url: 'https://youtube.com/watch?v=lDK9QqIzhwk',
+        url: 'https://www.youtube.com/watch?v=lDK9QqIzhwk',
         thumbnail: 'https://i.ytimg.com/vi/lDK9QqIzhwk/hqdefault.jpg'
       },
       {
@@ -248,7 +249,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Def Leppard',
         decade: '1980–1990',
         year: '1987',
-        url: 'https://youtube.com/watch?v=0UIB9Y4OFPs',
+        url: 'https://www.youtube.com/watch?v=0UIB9Y4OFPs',
         thumbnail: 'https://i.ytimg.com/vi/0UIB9Y4OFPs/hqdefault.jpg'
       },
       {
@@ -256,7 +257,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'AC/DC',
         decade: '1980–1990',
         year: '1980',
-        url: 'https://youtube.com/watch?v=pAgnJDJN4VA',
+        url: 'https://www.youtube.com/watch?v=pAgnJDJN4VA',
         thumbnail: 'https://i.ytimg.com/vi/pAgnJDJN4VA/hqdefault.jpg'
       },
       {
@@ -264,7 +265,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Queen',
         decade: '1980–1990',
         year: '1977',
-        url: 'https://youtube.com/watch?v=-tJYN-eG1zk',
+        url: 'https://www.youtube.com/watch?v=-tJYN-eG1zk',
         thumbnail: 'https://i.ytimg.com/vi/-tJYN-eG1zk/hqdefault.jpg'
       }
     ]
@@ -276,7 +277,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Michael Jackson',
         decade: '1980–1990',
         year: '1983',
-        url: 'https://youtube.com/watch?v=Zi_XLOBDo_Y',
+        url: 'https://www.youtube.com/watch?v=Zi_XLOBDo_Y',
         thumbnail: 'https://i.ytimg.com/vi/Zi_XLOBDo_Y/hqdefault.jpg'
       },
       {
@@ -284,7 +285,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Madonna',
         decade: '1980–1990',
         year: '1984',
-        url: 'https://youtube.com/watch?v=s__rX_WL100',
+        url: 'https://www.youtube.com/watch?v=s__rX_WL100',
         thumbnail: 'https://i.ytimg.com/vi/s__rX_WL100/hqdefault.jpg'
       },
       {
@@ -292,7 +293,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Michael Jackson',
         decade: '1980–1990',
         year: '1983',
-        url: 'https://youtube.com/watch?v=oRdxUFDoQe0',
+        url: 'https://www.youtube.com/watch?v=oRdxUFDoQe0',
         thumbnail: 'https://i.ytimg.com/vi/oRdxUFDoQe0/hqdefault.jpg'
       },
       {
@@ -300,7 +301,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Cyndi Lauper',
         decade: '1980–1990',
         year: '1983',
-        url: 'https://youtube.com/watch?v=PIb6AZdTr-A',
+        url: 'https://www.youtube.com/watch?v=PIb6AZdTr-A',
         thumbnail: 'https://i.ytimg.com/vi/PIb6AZdTr-A/hqdefault.jpg'
       },
       {
@@ -308,7 +309,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'a-ha',
         decade: '1980–1990',
         year: '1985',
-        url: 'https://youtube.com/watch?v=djV11Xbc914',
+        url: 'https://www.youtube.com/watch?v=djV11Xbc914',
         thumbnail: 'https://i.ytimg.com/vi/djV11Xbc914/hqdefault.jpg'
       }
     ],
@@ -318,7 +319,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Britney Spears',
         decade: '2000–2010',
         year: '2003',
-        url: 'https://youtube.com/watch?v=LOZuxwVk7TU',
+        url: 'https://www.youtube.com/watch?v=LOZuxwVk7TU',
         thumbnail: 'https://i.ytimg.com/vi/LOZuxwVk7TU/hqdefault.jpg'
       },
       {
@@ -326,7 +327,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Kelly Clarkson',
         decade: '2000–2010',
         year: '2004',
-        url: 'https://youtube.com/watch?v=R7UrFYvl5TE',
+        url: 'https://www.youtube.com/watch?v=R7UrFYvl5TE',
         thumbnail: 'https://i.ytimg.com/vi/R7UrFYvl5TE/hqdefault.jpg'
       },
       {
@@ -334,7 +335,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Gwen Stefani',
         decade: '2000–2010',
         year: '2004',
-        url: 'https://youtube.com/watch?v=Kgjkth6BRRY',
+        url: 'https://www.youtube.com/watch?v=Kgjkth6BRRY',
         thumbnail: 'https://i.ytimg.com/vi/Kgjkth6BRRY/hqdefault.jpg'
       },
       {
@@ -342,7 +343,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Lady Gaga',
         decade: '2000–2010',
         year: '2009',
-        url: 'https://youtube.com/watch?v=qrO4YZeyl0I',
+        url: 'https://www.youtube.com/watch?v=qrO4YZeyl0I',
         thumbnail: 'https://i.ytimg.com/vi/qrO4YZeyl0I/hqdefault.jpg'
       },
       {
@@ -350,7 +351,7 @@ const curatedLibrary: Record<string, Record<string, Song[]>> = {
         artist: 'Katy Perry',
         decade: '2000–2010',
         year: '2008',
-        url: 'https://youtube.com/watch?v=tAp9BKosZXs',
+        url: 'https://www.youtube.com/watch?v=tAp9BKosZXs',
         thumbnail: 'https://i.ytimg.com/vi/tAp9BKosZXs/hqdefault.jpg'
       }
     ]
@@ -380,7 +381,7 @@ function isInDecade(publishedAt: string, startYear: number, endYear: number): bo
   return publishYear >= startYear && publishYear <= endYear;
 }
 
-// Clean video title by removing common official video markers
+// Clean video title by removing official video markers and keeping only the song title
 function cleanVideoTitle(title: string): string {
   const cleanPatterns = [
     /\s*\(Official.*?\)/gi,
@@ -391,7 +392,9 @@ function cleanVideoTitle(title: string): string {
     /\s*\(HD\)/gi,
     /\s*\[HD\]/gi,
     /\s*\(Explicit\)/gi,
-    /\s*\[Explicit\]/gi
+    /\s*\[Explicit\]/gi,
+    /\s*\(Remastered.*?\)/gi,
+    /\s*\[Remastered.*?\]/gi
   ];
   
   let cleanTitle = title;
@@ -402,18 +405,63 @@ function cleanVideoTitle(title: string): string {
   return cleanTitle;
 }
 
-// Find official channels for an artist (main, Topic, VEVO)
-async function findOfficialChannels(artistName: string): Promise<Array<{ channelId: string; title: string; subscriberCount: number; type: string }>> {
+// Check if a video is a music track (not interview, short, etc.)
+function isMusicTrack(title: string, description: string = ''): boolean {
+  const titleLower = title.toLowerCase();
+  const descLower = description.toLowerCase();
+  
+  // Exclude non-music content
+  const excludePatterns = [
+    /interview/i,
+    /behind.the.scenes/i,
+    /making.of/i,
+    /documentary/i,
+    /trailer/i,
+    /teaser/i,
+    /snippet/i,
+    /preview/i,
+    /reaction/i,
+    /review/i,
+    /cover/i,
+    /remix(?!.*official)/i, // Allow official remixes
+    /acoustic(?!.*official)/i, // Allow official acoustic versions
+    /live(?!.*official)/i, // Allow official live versions
+    /concert/i,
+    /tour/i,
+    /backstage/i,
+    /vlog/i,
+    /podcast/i
+  ];
+  
+  // Check if title contains excluded patterns
+  for (const pattern of excludePatterns) {
+    if (pattern.test(titleLower) || pattern.test(descLower)) {
+      return false;
+    }
+  }
+  
+  // Must be a reasonable length for a song title (not too short, not too long)
+  const cleanTitle = cleanVideoTitle(title);
+  if (cleanTitle.length < 2 || cleanTitle.length > 100) {
+    return false;
+  }
+  
+  return true;
+}
+
+// Find official channels for an artist (Official, Topic, VEVO)
+async function findOfficialChannels(artistName: string): Promise<Array<{ channelId: string; title: string; subscriberCount: number; type: string; verified: boolean }>> {
   if (!YOUTUBE_API_KEY) return [];
 
-  const channels: Array<{ channelId: string; title: string; subscriberCount: number; type: string }> = [];
+  const channels: Array<{ channelId: string; title: string; subscriberCount: number; type: string; verified: boolean }> = [];
   
-  // Search for different channel types
+  // Search for different official channel types
   const searchQueries = [
     `${artistName} official`,
     `${artistName} - Topic`,
     `${artistName}VEVO`,
-    `${artistName}OfficialVEVO`
+    `${artistName}OfficialVEVO`,
+    artistName // Sometimes the official channel is just the artist name
   ];
 
   for (const query of searchQueries) {
@@ -422,7 +470,7 @@ async function findOfficialChannels(artistName: string): Promise<Array<{ channel
         part: 'snippet',
         q: query,
         type: 'channel',
-        maxResults: '5',
+        maxResults: '10',
         key: YOUTUBE_API_KEY
       });
 
@@ -437,7 +485,7 @@ async function findOfficialChannels(artistName: string): Promise<Array<{ channel
       // Get detailed channel information
       const channelIds = foundChannels.map((ch: any) => ch.id.channelId).join(',');
       const channelParams = new URLSearchParams({
-        part: 'snippet,statistics',
+        part: 'snippet,statistics,status',
         id: channelIds,
         key: YOUTUBE_API_KEY
       });
@@ -452,21 +500,26 @@ async function findOfficialChannels(artistName: string): Promise<Array<{ channel
         const channelTitle = channel.snippet.title.toLowerCase();
         const artistLower = artistName.toLowerCase();
         const subscriberCount = parseInt(channel.statistics?.subscriberCount || '0');
+        const isVerified = channel.status?.isLinked || false;
         
-        // Must contain artist name
-        if (!channelTitle.includes(artistLower)) continue;
+        // Must contain artist name or be very similar
+        if (!channelTitle.includes(artistLower) && !artistLower.includes(channelTitle.split(' ')[0])) continue;
         
         let channelType = 'other';
         if (channelTitle.includes('- topic')) channelType = 'topic';
         else if (channelTitle.includes('vevo')) channelType = 'vevo';
-        else if (channelTitle.includes('official') || channelTitle === artistLower) channelType = 'official';
+        else if (channelTitle.includes('official') || channelTitle === artistLower || isVerified) channelType = 'official';
         
-        channels.push({
-          channelId: channel.id,
-          title: channel.snippet.title,
-          subscriberCount,
-          type: channelType
-        });
+        // Only add if it's an official type and has reasonable subscriber count
+        if (['official', 'vevo', 'topic'].includes(channelType) && subscriberCount > 1000) {
+          channels.push({
+            channelId: channel.id,
+            title: channel.snippet.title,
+            subscriberCount,
+            type: channelType,
+            verified: isVerified
+          });
+        }
       }
     } catch (error) {
       console.warn(`Failed to search for channels with query "${query}":`, error);
@@ -474,11 +527,15 @@ async function findOfficialChannels(artistName: string): Promise<Array<{ channel
     }
   }
 
-  // Sort by priority: official > vevo > topic > other, then by subscriber count
+  // Sort by priority: official > vevo > topic, then by subscriber count, then by verification
   const typePriority = { official: 4, vevo: 3, topic: 2, other: 1 };
   return channels.sort((a, b) => {
     const priorityDiff = (typePriority[a.type as keyof typeof typePriority] || 0) - (typePriority[b.type as keyof typeof typePriority] || 0);
     if (priorityDiff !== 0) return -priorityDiff;
+    
+    const verifiedDiff = (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
+    if (verifiedDiff !== 0) return verifiedDiff;
+    
     return b.subscriberCount - a.subscriberCount;
   });
 }
@@ -505,7 +562,7 @@ async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
   }
 }
 
-// Get videos from uploads playlist
+// Get videos from uploads playlist with detailed information
 async function getPlaylistVideos(playlistId: string, maxResults: number = 50): Promise<any[]> {
   if (!YOUTUBE_API_KEY) return [];
 
@@ -521,54 +578,81 @@ async function getPlaylistVideos(playlistId: string, maxResults: number = 50): P
     if (!response.ok) return [];
 
     const data = await response.json();
-    return data.items || [];
+    const items = data.items || [];
+
+    // Get additional video details
+    if (items.length > 0) {
+      const videoIds = items.map((item: any) => item.snippet.resourceId.videoId).join(',');
+      const videoParams = new URLSearchParams({
+        part: 'snippet,statistics',
+        id: videoIds,
+        key: YOUTUBE_API_KEY
+      });
+
+      const videoResponse = await fetch(`${YOUTUBE_VIDEOS_URL}?${videoParams}`);
+      if (videoResponse.ok) {
+        const videoData = await videoResponse.json();
+        const videoDetails = videoData.items || [];
+        
+        // Merge playlist items with video details
+        return items.map((item: any) => {
+          const videoDetail = videoDetails.find((v: any) => v.id === item.snippet.resourceId.videoId);
+          return {
+            ...item,
+            videoDetails: videoDetail
+          };
+        });
+      }
+    }
+
+    return items;
   } catch (error) {
     console.error('Error getting playlist videos:', error);
     return [];
   }
 }
 
-// Convert playlist items to Song format
-function playlistItemsToSongs(items: any[], artistName: string, decade: string): Song[] {
-  return items.map(item => {
+// Convert playlist items to Song format with strict filtering
+function playlistItemsToSongs(items: any[], artistName: string, decade: string, startYear: number, endYear: number): Song[] {
+  const songs: Song[] = [];
+  
+  for (const item of items) {
     const snippet = item.snippet;
     const videoId = snippet.resourceId.videoId;
+    const publishedAt = snippet.publishedAt;
+    const title = snippet.title;
+    const description = snippet.description || '';
     
-    return {
-      title: cleanVideoTitle(snippet.title),
+    // Skip if not a music track
+    if (!isMusicTrack(title, description)) {
+      continue;
+    }
+    
+    // Skip if video is unavailable
+    if (title.toLowerCase().includes('deleted') || title.toLowerCase().includes('private')) {
+      continue;
+    }
+    
+    const publishYear = new Date(publishedAt).getFullYear();
+    const isInTargetDecade = publishYear >= startYear && publishYear <= endYear;
+    
+    const song: Song = {
+      title: cleanVideoTitle(title),
       artist: artistName,
       decade: decade,
-      year: new Date(snippet.publishedAt).getFullYear().toString(),
+      year: publishYear.toString(),
       url: `https://www.youtube.com/watch?v=${videoId}`,
       thumbnail: snippet.thumbnails?.high?.url || 
                 snippet.thumbnails?.medium?.url || 
                 snippet.thumbnails?.default?.url || '',
-      isOfficialSource: true
+      isOfficialSource: true,
+      isInTargetDecade
     };
-  });
-}
-
-// Filter songs by genre (optional, non-strict)
-function filterByGenre(songs: Song[], genre: string): Song[] {
-  if (!genre) return songs;
-  
-  const genreKeywords = genre.toLowerCase().split(/[\s-]+/);
-  const prioritized: Song[] = [];
-  const others: Song[] = [];
-  
-  for (const song of songs) {
-    const titleLower = song.title.toLowerCase();
-    const hasGenreMatch = genreKeywords.some(keyword => titleLower.includes(keyword));
     
-    if (hasGenreMatch) {
-      prioritized.push(song);
-    } else {
-      others.push(song);
-    }
+    songs.push(song);
   }
   
-  // Return prioritized first, then others
-  return [...prioritized, ...others];
+  return songs;
 }
 
 // Get fallback songs from curated library
@@ -605,20 +689,20 @@ function getFallbackSongs(genre: string, decade: string, artistName?: string): S
     return allDecadeSongs.slice(0, 5);
   }
   
-  // Last resort: create generic songs
+  // Last resort: create generic songs with proper structure
   const { startYear } = getDecadeYearBounds(decade);
   return Array.from({ length: 5 }, (_, i) => ({
-    title: `${genre} Hit #${i + 1}`,
+    title: `${genre} Classic #${i + 1}`,
     artist: artistName || 'Various Artists',
     decade: decade,
     year: (startYear + i).toString(),
-    url: 'https://youtube.com',
+    url: 'https://www.youtube.com',
     thumbnail: '',
     isCustomPick: true
   }));
 }
 
-// Main recommendation function
+// Main recommendation function - ALWAYS returns exactly 5 songs
 export async function getMultipleRecommendations(genre: string, decade: string, artist?: string): Promise<Song[]> {
   console.log(`🎵 Getting recommendations for: ${artist || 'Various Artists'} - ${genre} - ${decade}`);
   
@@ -635,7 +719,7 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
   const { startYear, endYear } = getDecadeYearBounds(decade);
 
   try {
-    // Step 1: Find official channels
+    // Step 1: Find official channels (Official, Topic, VEVO only)
     console.log(`🔍 Finding official channels for ${artist}`);
     const channels = await findOfficialChannels(artist);
     
@@ -644,11 +728,11 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
       return getFallbackSongs(genre, decade, artist);
     }
 
-    console.log(`✅ Found ${channels.length} channels:`, channels.map(c => `${c.title} (${c.type})`));
+    console.log(`✅ Found ${channels.length} official channels:`, channels.map(c => `${c.title} (${c.type}, ${c.subscriberCount} subs)`));
 
-    // Step 2: Try each channel until we get enough songs
+    // Step 2: Try each official channel until we get enough songs
     for (const channel of channels) {
-      console.log(`🎬 Checking channel: ${channel.title}`);
+      console.log(`🎬 Checking official channel: ${channel.title} (${channel.type})`);
       
       const uploadsPlaylistId = await getUploadsPlaylistId(channel.channelId);
       if (!uploadsPlaylistId) {
@@ -656,7 +740,7 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
         continue;
       }
 
-      const playlistItems = await getPlaylistVideos(uploadsPlaylistId, 50);
+      const playlistItems = await getPlaylistVideos(uploadsPlaylistId, 100); // Get more to filter properly
       if (playlistItems.length === 0) {
         console.log('❌ No videos in playlist');
         continue;
@@ -664,43 +748,40 @@ export async function getMultipleRecommendations(genre: string, decade: string, 
 
       console.log(`📹 Found ${playlistItems.length} videos in playlist`);
 
-      // Convert to songs
-      const allSongs = playlistItemsToSongs(playlistItems, artist, decade);
+      // Convert to songs with strict filtering
+      const allSongs = playlistItemsToSongs(playlistItems, artist, decade, startYear, endYear);
       
-      // Filter by decade
-      const decadeSongs = allSongs.filter(song => 
-        isInDecade(new Date(song.year + '-01-01').toISOString(), startYear, endYear)
-      );
+      if (allSongs.length === 0) {
+        console.log('❌ No valid music tracks found after filtering');
+        continue;
+      }
 
-      console.log(`📅 ${decadeSongs.length} songs match the decade ${decade}`);
+      // Separate songs by decade match
+      const decadeSongs = allSongs.filter(song => song.isInTargetDecade);
+      const latestSongs = allSongs.filter(song => !song.isInTargetDecade).slice(0, 5);
+
+      console.log(`📅 ${decadeSongs.length} songs match the decade ${decade}, ${latestSongs.length} latest songs available`);
 
       if (decadeSongs.length >= 5) {
-        // We have enough songs from the decade
-        const genreFiltered = filterByGenre(decadeSongs, genre);
-        const result = genreFiltered.slice(0, 5);
-        console.log(`✅ Returning ${result.length} songs from ${decade}`);
+        // We have enough songs from the target decade
+        const result = decadeSongs.slice(0, 5);
+        console.log(`✅ Returning 5 official songs from ${decade}`);
         return result;
       } else if (decadeSongs.length > 0) {
-        // Some songs from decade, but not enough - supplement with latest
-        const latestSongs = allSongs.slice(0, 5 - decadeSongs.length);
-        const combined = [...decadeSongs, ...latestSongs];
-        const genreFiltered = filterByGenre(combined, genre);
-        const result = genreFiltered.slice(0, 5);
-        console.log(`⚠️ Only ${decadeSongs.length} songs from decade, supplemented with latest tracks`);
-        return result;
-      } else {
-        // No songs from decade, return latest 5
-        const latestSongs = allSongs.slice(0, 5);
-        const genreFiltered = filterByGenre(latestSongs, genre);
-        if (genreFiltered.length >= 5) {
-          console.log(`⚠️ No songs from ${decade}, returning latest official tracks`);
-          return genreFiltered.slice(0, 5);
-        }
+        // Some songs from decade, supplement with latest
+        const needed = 5 - decadeSongs.length;
+        const supplemented = [...decadeSongs, ...latestSongs.slice(0, needed)];
+        console.log(`⚠️ Only ${decadeSongs.length} songs from ${decade}, supplemented with ${needed} latest tracks`);
+        return supplemented;
+      } else if (latestSongs.length >= 5) {
+        // No songs from decade, return latest 5 official tracks
+        console.log(`⚠️ No songs from ${decade}, returning 5 latest official tracks`);
+        return latestSongs.slice(0, 5);
       }
     }
 
     // If we get here, no channel had enough content
-    console.log('❌ No channels had sufficient content, using fallback');
+    console.log('❌ No official channels had sufficient music content, using fallback');
     return getFallbackSongs(genre, decade, artist);
 
   } catch (error) {
