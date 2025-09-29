@@ -21,7 +21,7 @@ const Playlist: React.FC<PlaylistProps> = ({ songs, onRemoveSong, onClearPlaylis
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 gradient-primary bg-clip-text text-transparent">
           <Music className="w-5 h-5 text-neon-purple" />
-          Mandy's Playlist
+          ✨ Mandy's Playlist ✨
         </CardTitle>
         {songs.length > 0 && (
           <div className="flex justify-between items-center">
@@ -45,7 +45,7 @@ const Playlist: React.FC<PlaylistProps> = ({ songs, onRemoveSong, onClearPlaylis
         {songs.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground">
             <Music className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">Complete levels to discover amazing songs!</p>
+            <p className="text-sm">Complete levels to discover your amazing songs, Mandy! 🎵</p>
           </div>
         ) : (
           <ScrollArea className="h-96">

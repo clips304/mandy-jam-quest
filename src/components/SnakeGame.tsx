@@ -407,8 +407,9 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold mb-2 neon-text gradient-primary bg-clip-text text-transparent">
-            Mandy's Music Quest
+            ✨ Mandy's Music Quest ✨
           </h1>
+          <p className="text-sm text-muted-foreground mb-2">Made for Mandy 💙</p>
           <p className="text-muted-foreground">
             {preferences.genre} • {preferences.decade} 
             {preferences.artist && ` • ${preferences.artist}`}
@@ -480,10 +481,10 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
                     {gameState === 'gameover' && (
                       <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg">
                         <div className="text-center">
-                          <div className="text-2xl font-bold mb-2 text-destructive">Game Over</div>
-                          <div className="text-lg mb-4">Final Score: {score}</div>
+                          <div className="text-2xl font-bold mb-2 text-destructive">Game Over, Mandy!</div>
+                          <div className="text-lg mb-4">Your Final Score: {score}</div>
                           <Button onClick={handleRestart} variant="game">
-                            Play Again
+                            Try Again, Mandy! 🎮
                           </Button>
                         </div>
                       </div>
@@ -493,8 +494,8 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
                     {isLoadingSong && (
                       <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg">
                         <div className="text-center">
-                          <div className="text-lg mb-2">🎵 Finding your perfect song...</div>
-                          <div className="animate-pulse text-neon-purple">Searching the music world...</div>
+                          <div className="text-lg mb-2">🎵 Finding your perfect song, Mandy...</div>
+                          <div className="animate-pulse text-neon-purple">Searching the music world just for you...</div>
                         </div>
                       </div>
                     )}

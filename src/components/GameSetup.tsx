@@ -46,10 +46,10 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 neon-text gradient-primary bg-clip-text text-transparent">
-            Mandy's Music Quest
+            ✨ Mandy's Music Quest ✨
           </h1>
           <p className="text-muted-foreground text-lg">
-            Snake meets Music Discovery
+            Welcome Mandy! Let's play and discover your songs 🌸
           </p>
         </div>
 
@@ -57,7 +57,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         <Card className="shadow-card glass-effect border-border/50">
           <CardHeader>
             <CardTitle className="text-center gradient-primary bg-clip-text text-transparent">
-              Choose Your Musical Journey
+              Mandy, pick your vibe 🌸
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -127,13 +127,13 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
               size="lg"
               className="w-full"
             >
-              Start Musical Adventure
+              Let's Go, Mandy! 🎵
             </Button>
 
             {/* Instructions */}
             <div className="text-center text-sm text-muted-foreground space-y-1">
               <p>🐍 Use arrow keys to move</p>
-              <p>🎵 Complete levels to unlock songs</p>
+              <p>🎵 Complete levels to unlock your songs</p>
               <p>🎯 Reach the target score to advance</p>
             </div>
           </CardContent>

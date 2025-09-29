@@ -33,8 +33,11 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
       <DialogContent className="sm:max-w-md glass-effect border-border/50 shadow-card">
         <DialogHeader>
           <DialogTitle className="text-center gradient-primary bg-clip-text text-transparent">
-            🎉 Level {level} Complete!
+            🎉 Level {level} Complete, Mandy!
           </DialogTitle>
+          <p className="text-center text-sm text-muted-foreground mt-2">
+            Here are 5 songs just for you 💙
+          </p>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -69,6 +72,7 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                         
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground mb-1 truncate">
+                            <span className="text-xs text-neon-purple block mb-1">Mandy, you might love this track:</span>
                             {song.title}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-1 truncate">
@@ -112,7 +116,7 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                           className="flex-1"
                         >
                           <Play className="w-4 h-4 mr-2" />
-                          Play Song
+                          This is your song, Mandy 🎶
                         </Button>
                         
                         <Button
@@ -132,8 +136,8 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
               {/* Success Message */}
               {songs.filter(song => !song.isError).length > 0 && (
                 <div className="text-center text-sm text-muted-foreground">
-                  <p>🎵 Here are {songs.filter(song => !song.isError).length} official songs matching your taste!</p>
-                  <p className="mt-1">Ready for the next level?</p>
+                  <p>🎵 You did it, Mandy! Here are your next songs.</p>
+                  <p className="mt-1">Ready for the next level? 🚀</p>
                 </div>
               )}
             </>
@@ -147,7 +151,7 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
               size="lg"
               className="flex-1 transition-bounce"
             >
-              Next Level 🚀
+              Nice work Mandy, ready for the next level? 🚀
             </Button>
             
             <Button
