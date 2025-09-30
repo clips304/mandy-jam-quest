@@ -59,15 +59,46 @@ function isOfficialChannel(channelTitle) {
 function isExcludedContent(title, description = '') {
   const titleLower = title.toLowerCase();
   const descLower = description.toLowerCase();
-  
+
   const excludePatterns = [
-    'lyric', 'lyrics', 'live', 'cover', 'interview', 
+    'lyric', 'lyrics', 'live', 'cover', 'interview',
     'behind the scenes', 'teaser', 'reaction', 'remix', 'short'
   ];
-  
-  return excludePatterns.some(pattern => 
+
+  return excludePatterns.some(pattern =>
     titleLower.includes(pattern) || descLower.includes(pattern)
   );
+}
+
+// Check if content is music-related
+function isMusicContent(title, description = '') {
+  const titleLower = title.toLowerCase();
+  const descLower = description.toLowerCase();
+
+  // Exclude patterns
+  const excludePatterns = [
+    'lyric', 'lyrics', 'live', 'cover', 'interview',
+    'behind the scenes', 'teaser', 'reaction', 'remix', 'short',
+    'tutorial', 'lesson', 'how to', 'review', 'unboxing'
+  ];
+
+  if (excludePatterns.some(pattern => titleLower.includes(pattern))) {
+    return false;
+  }
+
+  // Include patterns
+  const includePatterns = [
+    'official video', 'official audio', 'official music video',
+    'music video', 'mv', 'audio'
+  ];
+
+  // If it has positive indicators, it's likely music
+  if (includePatterns.some(pattern => titleLower.includes(pattern) || descLower.includes(pattern))) {
+    return true;
+  }
+
+  // Default to true if no strong signals (let other filters handle it)
+  return true;
 }
 
 // Helper function to find official channels for an artist
