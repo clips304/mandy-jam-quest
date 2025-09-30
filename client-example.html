@@ -272,7 +272,7 @@
                 }
                 params.append('count', count);
                 
-                const response = await fetch(`${API_BASE_URL}/api/youtube/official-songs?${params.toString()}`);
+                const response = await fetch(`${API_BASE_URL}/api/music?${params.toString()}`);
                 const data = await response.json();
                 
                 displayResults(data);

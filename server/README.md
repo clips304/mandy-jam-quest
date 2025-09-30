@@ -89,17 +89,17 @@ Health check endpoint.
 
 ### Artist-Specific Search
 ```bash
-curl "http://localhost:3001/api/youtube/official-songs?artist=Taylor%20Swift&genre=pop&startYear=2010&endYear=2019&count=10"
+curl "http://localhost:3001/api/music?artist=Taylor%20Swift&genre=pop&startYear=2010&endYear=2019&count=10"
 ```
 
 ### General Genre Search  
 ```bash
-curl "http://localhost:3001/api/youtube/official-songs?genre=jazz&startYear=1950&endYear=1959&count=5"
+curl "http://localhost:3001/api/music?genre=jazz&startYear=1950&endYear=1959&count=5"
 ```
 
 ### Latest Songs (No Decade Filter)
 ```bash
-curl "http://localhost:3001/api/youtube/official-songs?artist=Drake&count=5"
+curl "http://localhost:3001/api/music?artist=Drake&count=5"
 ```
 
 ## How It Works
