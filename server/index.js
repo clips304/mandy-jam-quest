@@ -7,8 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // YouTube API configuration
-// TODO: Set your YouTube Data API v3 key here
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
+const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 const YOUTUBE_BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
 // Helper function to make YouTube API requests
@@ -48,30 +47,27 @@ function parseDuration(duration) {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-// Helper function to check if content is music-related
-function isMusicContent(title, description = '') {
+// Check if channel is official (Topic, VEVO, or verified)
+function isOfficialChannel(channelTitle) {
+  const titleLower = channelTitle.toLowerCase();
+  return titleLower.includes('- topic') || 
+         titleLower.includes('vevo') || 
+         titleLower.includes('official');
+}
+
+// Check if video contains excluded content
+function isExcludedContent(title, description = '') {
   const titleLower = title.toLowerCase();
   const descLower = description.toLowerCase();
   
-  // Exclude non-music content
   const excludePatterns = [
-    /\b(lyric|lyrics)\b/i,
-    /\b(live)\b/i,
-    /\b(cover|covers)\b/i,
-    /\b(interview|interviews)\b/i,
-    /\b(short|shorts)\b/i,
-    /\b(teaser|teasers)\b/i,
-    /\bbehind the scenes\b/i,
+    'lyric', 'lyrics', 'live', 'cover', 'interview', 
+    'behind the scenes', 'teaser', 'reaction', 'remix', 'short'
   ];
   
-  // Check if title or description contains excluded patterns
-  for (const pattern of excludePatterns) {
-    if (pattern.test(titleLower) || pattern.test(descLower)) {
-      return false;
-    }
-  }
-  
-  return true;
+  return excludePatterns.some(pattern => 
+    titleLower.includes(pattern) || descLower.includes(pattern)
+  );
 }
 
 // Helper function to find official channels for an artist
@@ -382,131 +378,102 @@ async function searchGeneralMusic(genre, decade, count) {
   }
 }
 
-// Main endpoint for official songs
+// Main endpoint for YouTube Music official songs
 app.get('/api/music', async (req, res) => {
   try {
-    const { artist, genre, startYear, endYear, count = 5 } = req.query;
+    const { artist, startYear, endYear, count = 5 } = req.query;
     
-    console.log(`🎵 Music Request:`, { artist, genre, startYear, endYear, count });
+    console.log(`🎵 YouTube Music Request:`, { artist, startYear, endYear, count });
     
     const requestedCount = parseInt(count);
-    let decade = null;
     
-    if (startYear && endYear) {
-      decade = {
-        startYear: parseInt(startYear),
-        endYear: parseInt(endYear)
-      };
+    if (!artist) {
+      return res.json({
+        results: [],
+        message: 'Artist name is required for YouTube Music search.'
+      });
     }
     
-    let results = [];
-    let message = '';
+    // Search for official music videos
+    const searchParams = {
+      part: 'snippet',
+      q: artist,
+      type: 'video',
+      videoCategoryId: '10', // Music category only
+      videoDuration: 'medium', // Exclude shorts
+      maxResults: Math.min(50, requestedCount * 3),
+      key: YOUTUBE_API_KEY
+    };
+
+    const searchData = await youtubeRequest('search', searchParams);
     
-    if (artist) {
-      // Artist-specific search
-      console.log(`👤 Searching for artist: ${artist}`);
-      
-      const channels = await findOfficialChannels(artist);
-      
-      if (channels.length === 0) {
-        return res.json({
-          results: [],
-          message: `No official channels found for "${artist}". Please check the artist name.`
-        });
-      }
-      
-      // Try each channel until we get enough results
-      for (const channel of channels) {
-        console.log(`🎬 Checking channel: ${channel.title} (${channel.type})`);
-        
-        if (!channel.uploadsPlaylistId) {
-          console.log('❌ No uploads playlist found');
-          continue;
-        }
-        
-        // Get videos from uploads playlist
-        const playlistVideos = await getPlaylistVideos(channel.uploadsPlaylistId, 200);
-        
-        if (playlistVideos.length === 0) {
-          console.log('❌ No videos in playlist');
-          continue;
-        }
-        
-        // Get video details
-        const videoIds = playlistVideos.map(item => item.snippet.resourceId.videoId);
-        const videos = await getVideoDetails(videoIds);
-        
-        // Filter and score videos
-        const filtered = filterAndScoreVideos(videos, channel.channelId, decade, genre);
-        
-        if (filtered.length === 0) {
-          console.log('❌ No valid music videos after filtering');
-          continue;
-        }
-        
-        // Separate decade matches from others
-        const decadeMatches = filtered.filter(f => f.inDecade);
-        const otherVideos = filtered.filter(f => !f.inDecade);
-        
-        console.log(`📅 ${decadeMatches.length} videos match decade, ${otherVideos.length} other videos`);
-        
-        // Build results
-        if (decadeMatches.length >= requestedCount) {
-          // Enough decade matches
-          results = decadeMatches.slice(0, requestedCount);
-        } else if (decadeMatches.length > 0) {
-          // Some decade matches, supplement with latest
-          const needed = requestedCount - decadeMatches.length;
-          results = [...decadeMatches, ...otherVideos.slice(0, needed)];
-          message = `Only ${decadeMatches.length} official songs found from that decade.`;
-        } else if (otherVideos.length >= requestedCount) {
-          // No decade matches, use latest
-          results = otherVideos.slice(0, requestedCount);
-          message = `No official songs found from that decade; showing latest official uploads instead.`;
-        } else {
-          // Not enough videos total
-          results = otherVideos;
-          message = `Only ${results.length} official songs found for this artist.`;
-        }
-        
-        if (results.length > 0) {
-          console.log(`✅ Found ${results.length} results from ${channel.title}`);
-          break;
-        }
-      }
-      
-    } else {
-      // General music search
-      console.log(`🎵 Searching for general music`);
-      const filtered = await searchGeneralMusic(genre, decade, requestedCount);
-      results = filtered;
-      
-      if (results.length < requestedCount) {
-        message = `Only ${results.length} official songs found matching your criteria.`;
-      }
+    if (!searchData.items || searchData.items.length === 0) {
+      return res.json({
+        results: [],
+        message: `No official music videos found for "${artist}".`
+      });
     }
-    
-    // Format results
-    const formattedResults = results.map(result => {
-      const video = result.video;
+
+    // Get video details
+    const videoIds = searchData.items.map(item => item.id.videoId);
+    const videoData = await youtubeRequest('videos', {
+      part: 'snippet,contentDetails,statistics',
+      id: videoIds.join(',')
+    });
+
+    const videos = videoData.items || [];
+    const filteredResults = [];
+
+    for (const video of videos) {
       const snippet = video.snippet;
+      const contentDetails = video.contentDetails;
       
-      return {
+      // Must be Music category
+      if (snippet.categoryId !== '10') continue;
+      
+      // Must be from official channel
+      if (!isOfficialChannel(snippet.channelTitle)) continue;
+      
+      // Exclude non-song content
+      if (isExcludedContent(snippet.title, snippet.description)) continue;
+      
+      // Must be longer than 30 seconds
+      const duration = parseDuration(contentDetails.duration);
+      if (duration < 30) continue;
+      
+      // Check decade filter if provided
+      const publishYear = new Date(snippet.publishedAt).getFullYear();
+      if (startYear && endYear) {
+        const start = parseInt(startYear);
+        const end = parseInt(endYear);
+        if (publishYear < start || publishYear > end) continue;
+      }
+      
+      filteredResults.push({
         title: snippet.title.replace(/\s*\(Official.*?\)/gi, '').replace(/\s*\[Official.*?\]/gi, '').trim(),
-        artist: snippet.channelTitle,
-        year: new Date(snippet.publishedAt).getFullYear().toString(),
-        url: `https://www.youtube.com/watch?v=${video.id}`,
+        artist: snippet.channelTitle.replace(' - Topic', '').replace('VEVO', ''),
+        year: publishYear.toString(),
+        url: `https://music.youtube.com/watch?v=${video.id}`,
         thumbnail: snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '',
         sourceChannelId: snippet.channelId,
         official: true
-      };
-    });
-    
-    console.log(`🎉 Returning ${formattedResults.length} official songs`);
+      });
+      
+      if (filteredResults.length >= requestedCount) break;
+    }
+
+    let message = '';
+    if (filteredResults.length === 0) {
+      message = `No official songs found for "${artist}".`;
+    } else if (startYear && endYear && filteredResults.length < requestedCount) {
+      message = `Only ${filteredResults.length} official songs found from that decade.`;
+    }
+
+    console.log(`🎉 Returning ${filteredResults.length} official YouTube Music songs`);
     
     res.json({
-      results: formattedResults,
-      message: message || `Found ${formattedResults.length} official songs.`
+      results: filteredResults,
+      message: message || `Found ${filteredResults.length} official songs.`
     });
     
   } catch (error) {
@@ -530,11 +497,11 @@ app.get('/api/health', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 YouTube Recommendation Server running on port ${PORT}`);
-  console.log(`🔑 YouTube API Key configured: ${!!YOUTUBE_API_KEY}`);
+  console.log(`🚀 YouTube Music API Server running on port ${PORT}`);
+  console.log(`🔑 YouTube API Key: ${YOUTUBE_API_KEY.substring(0, 10)}...`);
   console.log(`📡 Endpoints:`);
   console.log(`   GET /api/health`);
-  console.log(`   GET /api/youtube/official-songs?artist=Drake&genre=hip-hop&startYear=2020&endYear=2024&count=10`);
+  console.log(`   GET /api/music?artist=Drake&startYear=2010&endYear=2020&count=5`);
 });
 
 module.exports = app;

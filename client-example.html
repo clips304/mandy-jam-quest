@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Official Songs API - Test Client</title>
+    <title>YouTube Music API - Test Client</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -186,7 +186,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 YouTube Official Songs API</h1>
+        <h1>🎵 YouTube Music API</h1>
         
         <form id="searchForm">
             <div class="form-group">
@@ -322,7 +322,7 @@
                                 ${song.year} • Official: ${song.official ? '✅' : '❌'}
                             </div>
                         </div>
-                        <a href="${song.url}" target="_blank" class="play-button">
+                        <a href="${song.url}" target="_blank" class="play-button" title="Play on YouTube Music">
                             ▶️ Play Song
                         </a>
                     </div>
@@ -388,10 +388,10 @@
             const exampleButtons = document.createElement('div');
             exampleButtons.innerHTML = `
                 <h3>Quick Examples:</h3>
-                <button type="button" onclick="loadExample('Drake', 'hip-hop', '2020-2024')">Drake 2020s Hip-Hop</button>
-                <button type="button" onclick="loadExample('Taylor Swift', 'pop', '2010-2019')">Taylor Swift 2010s Pop</button>
-                <button type="button" onclick="loadExample('The Beatles', 'rock', '1960-1969')">Beatles 1960s Rock</button>
-                <button type="button" onclick="loadExample('', 'jazz', '1950-1959')">1950s Jazz</button>
+                <button type="button" onclick="loadExample('Drake', '', '2010-2020')">Drake 2010-2020</button>
+                <button type="button" onclick="loadExample('Taylor Swift', '', '2014-2017')">Taylor Swift 2014-2017</button>
+                <button type="button" onclick="loadExample('The Beatles', '', '1960-1969')">Beatles 1960s</button>
+                <button type="button" onclick="loadExample('Beyoncé', '', '2003-2008')">Beyoncé 2003-2008</button>
             `;
             form.appendChild(exampleButtons);
         });
