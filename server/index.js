@@ -56,24 +56,12 @@ function isMusicContent(title, description = '') {
   // Exclude non-music content
   const excludePatterns = [
     /\b(lyric|lyrics)\b/i,
-    /\b(live|acoustic live)\b/i,
+    /\b(live)\b/i,
     /\b(cover|covers)\b/i,
     /\b(interview|interviews)\b/i,
-    /\b(reaction|reactions)\b/i,
     /\b(short|shorts)\b/i,
-    /\b(snippet|snippets)\b/i,
     /\b(teaser|teasers)\b/i,
-    /\b(karaoke)\b/i,
-    /\b(tutorial|tutorials)\b/i,
     /\bbehind the scenes\b/i,
-    /\bmaking of\b/i,
-    /\bdocumentary\b/i,
-    /\btrailer\b/i,
-    /\bvlog\b/i,
-    /\bpodcast\b/i,
-    /\bconcert\b/i,
-    /\btour\b/i,
-    /\bbackstage\b/i
   ];
   
   // Check if title or description contains excluded patterns
@@ -253,6 +241,9 @@ function filterAndScoreVideos(videos, channelId, decade, genre) {
     // Must be from the official channel
     if (snippet.channelId !== channelId) continue;
     
+    // Must be Music category (categoryId = 10)
+    if (snippet.categoryId !== '10') continue;
+    
     // Must be music content
     if (!isMusicContent(snippet.title, snippet.description)) continue;
     
@@ -266,7 +257,6 @@ function filterAndScoreVideos(videos, channelId, decade, genre) {
     
     const publishYear = new Date(snippet.publishedAt).getFullYear();
     const viewCount = parseInt(statistics?.viewCount || '0');
-    const categoryId = snippet.categoryId;
     
     let score = 0;
     
@@ -275,10 +265,8 @@ function filterAndScoreVideos(videos, channelId, decade, genre) {
       score += 1000;
     }
     
-    // Music category bonus
-    if (categoryId === '10') {
-      score += 500;
-    }
+    // Music category bonus (already filtered above)
+    score += 500;
     
     // View count bonus (logarithmic)
     score += Math.log10(viewCount + 1) * 10;
@@ -395,11 +383,11 @@ async function searchGeneralMusic(genre, decade, count) {
 }
 
 // Main endpoint for official songs
-app.get('/api/youtube/official-songs', async (req, res) => {
+app.get('/api/music', async (req, res) => {
   try {
     const { artist, genre, startYear, endYear, count = 5 } = req.query;
     
-    console.log(`🎵 Official Songs Request:`, { artist, genre, startYear, endYear, count });
+    console.log(`🎵 Music Request:`, { artist, genre, startYear, endYear, count });
     
     const requestedCount = parseInt(count);
     let decade = null;
@@ -470,11 +458,11 @@ app.get('/api/youtube/official-songs', async (req, res) => {
           // Some decade matches, supplement with latest
           const needed = requestedCount - decadeMatches.length;
           results = [...decadeMatches, ...otherVideos.slice(0, needed)];
-          message = `Only ${decadeMatches.length} official songs found in that decade; showing latest official uploads instead.`;
+          message = `Only ${decadeMatches.length} official songs found from that decade.`;
         } else if (otherVideos.length >= requestedCount) {
           // No decade matches, use latest
           results = otherVideos.slice(0, requestedCount);
-          message = `No official songs found in that decade; showing latest official uploads instead.`;
+          message = `No official songs found from that decade; showing latest official uploads instead.`;
         } else {
           // Not enough videos total
           results = otherVideos;
