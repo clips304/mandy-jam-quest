@@ -130,23 +130,36 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       setLevelCompleted(true);
       setGameState('paused');
       setIsLoadingSong(true);
-      
+
       try {
         const songs = await getMultipleRecommendations(preferences.genre, preferences.decade, preferences.artist);
-        setCurrentSongs(songs);
+
+        if (songs.length > 0) {
+          setCurrentSongs(songs);
+        } else {
+          const fallbackSongs: Song[] = [{
+            title: `🎵 Music recommendations are temporarily unavailable. Please make sure the backend server is running at http://localhost:3001`,
+            artist: "System Message",
+            decade: preferences.decade,
+            year: new Date().getFullYear().toString(),
+            url: "#",
+            thumbnail: "",
+            isError: true
+          }];
+          setCurrentSongs(fallbackSongs);
+        }
         setShowRecommendation(true);
       } catch (error) {
         console.error('Error getting recommendations:', error);
-        // Fallback songs
-        const fallbackSongs: Song[] = Array.from({ length: 5 }, (_, i) => ({
-          title: `Great Choice #${i + 1}`,
-          artist: preferences.artist || "Various Artists",
+        const fallbackSongs: Song[] = [{
+          title: `🎵 Unable to connect to music server. Please start the backend server with 'cd server && npm start'`,
+          artist: "Connection Error",
           decade: preferences.decade,
-          year: preferences.decade.split('–')[0] || 'Unknown',
-          url: "https://youtube.com",
+          year: new Date().getFullYear().toString(),
+          url: "#",
           thumbnail: "",
-          isCustomPick: !!preferences.artist
-        }));
+          isError: true
+        }];
         setCurrentSongs(fallbackSongs);
         setShowRecommendation(true);
       } finally {
