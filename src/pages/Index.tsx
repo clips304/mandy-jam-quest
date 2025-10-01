@@ -1,5 +1,5 @@
 import React from 'react';
-import MusicQuest from '../components/MusicQuest';
+import MusicQuest from '../components/MusicQuest.tsx';
 
 const Index = () => {
   return <MusicQuest />;

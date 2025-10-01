@@ -1,9 +1,9 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { Card, CardContent } from '@/components/ui/card.tsx';
 import { ExternalLink, Plus, Play, RotateCcw, Sparkles } from 'lucide-react';
-import { Song } from '../types/game';
+import { Song } from '../types/game.ts';
 
 interface SongRecommendationPopupProps {
   songs: Song[];

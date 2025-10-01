@@ -1,5 +1,5 @@
-import { Song } from '../types/game';
-import { parseDecade } from './youtubeApiService';
+import { Song } from '../types/game.ts';
+import { parseDecade } from './youtubeApiService.ts';
 
 const API_BASE_URL = 'http://localhost:3001';
 

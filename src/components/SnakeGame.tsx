@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card.tsx';
+import { Button } from '@/components/ui/button.tsx';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import SongRecommendationPopup from './SongRecommendationPopup';
-import { GamePreferences } from './GameSetup';
-import { Song } from '../types/game';
-import { getMultipleRecommendations } from '../services/musicService';
+import SongRecommendationPopup from './SongRecommendationPopup.tsx';
+import { GamePreferences } from './GameSetup.tsx';
+import { Song } from '../types/game.ts';
+import { getMultipleRecommendations } from '../services/musicService.ts';
 
 interface SnakeGameProps {
   preferences: GamePreferences;

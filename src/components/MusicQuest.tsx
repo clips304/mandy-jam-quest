@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import GameSetup, { GamePreferences } from './GameSetup';
-import SnakeGame from './SnakeGame';
-import Playlist from './Playlist';
-import { Song } from '../types/game';
+import GameSetup, { GamePreferences } from './GameSetup.tsx';
+import SnakeGame from './SnakeGame.tsx';
+import Playlist from './Playlist.tsx';
+import { Song } from '../types/game.ts';
 
 type AppState = 'setup' | 'playing';
 

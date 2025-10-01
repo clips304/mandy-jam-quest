@@ -1,9 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { ScrollArea } from '@/components/ui/scroll-area.tsx';
 import { ExternalLink, Music, Sparkles, Trash2 } from 'lucide-react';
-import { Song } from '../types/game';
+import { Song } from '../types/game.ts';
 
 interface PlaylistProps {
   songs: Song[];
