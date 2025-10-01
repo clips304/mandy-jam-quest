@@ -1,21 +1,14 @@
 {
-  "name": "youtube-recommendation-server",
+  "name": "music-quest-server",
   "version": "1.0.0",
-  "description": "Robust YouTube recommendation endpoint for official music videos",
+  "description": "Music Quest API Server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "keywords": ["youtube", "music", "api", "recommendations"],
-  "author": "Music Quest",
-  "license": "MIT"
+    "express": "^4.18.2"
+  }
 }
