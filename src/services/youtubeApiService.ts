@@ -33,34 +33,45 @@ export async function getOfficialSongRecommendations(
 ): Promise<YouTubeRecommendationResponse> {
   try {
     console.log('🎵 Requesting official songs:', request);
-    
+
     // Build query parameters
     const params = new URLSearchParams();
-    
+
     if (request.artist) params.append('artist', request.artist);
-    if (request.genre) params.append('genre', request.genre);
     if (request.startYear) params.append('startYear', request.startYear.toString());
     if (request.endYear) params.append('endYear', request.endYear.toString());
     if (request.count) params.append('count', request.count.toString());
-    
-    const url = `${API_BASE_URL}/api/youtube/official-songs?${params.toString()}`;
-    
+
+    const url = `${API_BASE_URL}/api/music?${params.toString()}`;
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
-    const data: YouTubeRecommendationResponse = await response.json();
-    
-    console.log(`✅ Received ${data.results.length} official songs:`, data.message);
-    
-    return data;
-    
+
+    const data = await response.json();
+
+    const results: YouTubeRecommendationResult[] = (data.songs || []).map((song: any) => ({
+      title: song.title,
+      artist: request.artist || 'Unknown Artist',
+      year: song.year.toString(),
+      url: song.url,
+      thumbnail: song.thumbnail || '',
+      sourceChannelId: '',
+      official: true
+    }));
+
+    console.log(`✅ Received ${results.length} official songs`);
+
+    return {
+      results,
+      message: data.message || `Found ${results.length} songs`
+    };
+
   } catch (error) {
     console.error('❌ Error getting official song recommendations:', error);
-    
-    // Return empty results with error message
+
     return {
       results: [],
       message: `Failed to get recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`
