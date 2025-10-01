@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 // Client-side service to call our YouTube recommendation server
 export interface YouTubeRecommendationRequest {
   artist?: string;
@@ -22,9 +24,6 @@ export interface YouTubeRecommendationResponse {
   message: string;
 }
 
-// Base URL for our recommendation server
-const API_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
-
 /**
  * Get official song recommendations from YouTube
  */
@@ -35,22 +34,21 @@ export async function getOfficialSongRecommendations(
     console.log('🎵 Requesting official songs:', request);
 
     // Build query parameters
-    const params = new URLSearchParams();
+    const params: Record<string, string> = {};
 
-    if (request.artist) params.append('artist', request.artist);
-    if (request.startYear) params.append('startYear', request.startYear.toString());
-    if (request.endYear) params.append('endYear', request.endYear.toString());
-    if (request.count) params.append('count', request.count.toString());
+    if (request.artist) params.artist = request.artist;
+    if (request.startYear) params.startYear = request.startYear.toString();
+    if (request.endYear) params.endYear = request.endYear.toString();
+    if (request.count) params.count = request.count.toString();
 
-    const url = `${API_BASE_URL}/music?${params.toString()}`;
+    const { data, error } = await supabase.functions.invoke('music', {
+      body: params,
+      method: 'GET'
+    });
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Edge function error: ${error.message}`);
     }
-
-    const data = await response.json();
 
     const results: YouTubeRecommendationResult[] = (data.songs || []).map((song: any) => ({
       title: song.title,

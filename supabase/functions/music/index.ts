@@ -38,11 +38,25 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const artist = url.searchParams.get('artist');
-    const startYear = parseInt(url.searchParams.get('startYear') || '2010');
-    const endYear = parseInt(url.searchParams.get('endYear') || '2020');
-    const count = parseInt(url.searchParams.get('count') || '5');
+    // Parse request body or query parameters
+    let artist: string | null = null;
+    let startYear = 2010;
+    let endYear = 2020;
+    let count = 5;
+
+    if (req.method === 'POST') {
+      const body = await req.json();
+      artist = body.artist || null;
+      startYear = parseInt(body.startYear) || 2010;
+      endYear = parseInt(body.endYear) || 2020;
+      count = parseInt(body.count) || 5;
+    } else {
+      const url = new URL(req.url);
+      artist = url.searchParams.get('artist');
+      startYear = parseInt(url.searchParams.get('startYear') || '2010');
+      endYear = parseInt(url.searchParams.get('endYear') || '2020');
+      count = parseInt(url.searchParams.get('count') || '5');
+    }
     
     if (!artist) {
       return new Response(

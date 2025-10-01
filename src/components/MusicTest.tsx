@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx';
 import { Play, Loader as Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Song {
   title: string;
@@ -40,26 +41,29 @@ const MusicTest: React.FC = () => {
     setIsFallback(false);
 
     try {
-      const params = new URLSearchParams({
+      const params = {
         artist: artist.trim(),
         startYear,
         endYear,
         count: '5'
+      };
+
+      const { data, error } = await supabase.functions.invoke('music', {
+        body: params,
+        method: 'GET'
       });
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/music?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error(`Server returned status ${response.status}`);
+      if (error) {
+        throw new Error(`Edge function error: ${error.message}`);
       }
 
-      const data: APIResponse = await response.json();
+      const apiResponse: APIResponse = data;
 
-      setSongs(data.songs || []);
-      setIsFallback(data.isFallback || false);
+      setSongs(apiResponse.songs || []);
+      setIsFallback(apiResponse.isFallback || false);
 
-      if (data.isFallback && data.message) {
-        setError(data.message);
+      if (apiResponse.isFallback && apiResponse.message) {
+        setError(apiResponse.message);
       }
 
     } catch (err) {

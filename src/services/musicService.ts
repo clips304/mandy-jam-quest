@@ -1,7 +1,6 @@
 import { Song } from '../types/game.ts';
 import { parseDecade } from './youtubeApiService.ts';
-
-const API_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+import { supabase } from '@/integrations/supabase/client';
 
 export interface MusicPreferences {
   genres: string[];
@@ -28,34 +27,34 @@ async function fetchFromMusicAPI(
   count: number = 5
 ): Promise<MusicAPIResponse> {
   try {
-    const params = new URLSearchParams();
+    const params: Record<string, string> = {
+      startYear: startYear.toString(),
+      endYear: endYear.toString(),
+      count: count.toString(),
+    };
 
-    if (artist) params.append('artist', artist);
-    params.append('startYear', startYear.toString());
-    params.append('endYear', endYear.toString());
-    params.append('count', count.toString());
+    if (artist) {
+      params.artist = artist;
+    }
 
-    const url = `${API_BASE_URL}/music?${params.toString()}`;
-    console.log('🎵 Fetching from:', url);
+    console.log('🎵 Calling music edge function with params:', params);
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const { data, error } = await supabase.functions.invoke('music', {
+      body: params,
+      method: 'GET'
     });
 
-    if (!response.ok) {
-      throw new Error(`Server returned status ${response.status}`);
+    if (error) {
+      throw new Error(`Edge function error: ${error.message}`);
     }
 
-    const data: MusicAPIResponse = await response.json();
+    const apiResponse: MusicAPIResponse = data;
 
-    if (data.isFallback) {
-      console.warn('⚠️ Received fallback response:', data.message);
+    if (apiResponse.isFallback) {
+      console.warn('⚠️ Received fallback response:', apiResponse.message);
     }
 
-    return data;
+    return apiResponse;
 
   } catch (error) {
     console.error('❌ Could not connect to backend:', error);
