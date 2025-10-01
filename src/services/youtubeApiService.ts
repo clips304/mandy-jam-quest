@@ -42,8 +42,7 @@ export async function getOfficialSongRecommendations(
     if (request.count) params.count = request.count.toString();
 
     const { data, error } = await supabase.functions.invoke('music', {
-      body: params,
-      method: 'GET'
+      body: params
     });
 
     if (error) {

@@ -40,11 +40,11 @@ async function fetchFromMusicAPI(
     console.log('🎵 Calling music edge function with params:', params);
 
     const { data, error } = await supabase.functions.invoke('music', {
-      body: params,
-      method: 'GET'
+      body: params
     });
 
     if (error) {
+      console.error('Edge function error:', error);
       throw new Error(`Edge function error: ${error.message}`);
     }
 
