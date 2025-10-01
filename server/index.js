@@ -10,6 +10,11 @@ const YOUTUBE_API_KEY = 'AIzaSyAR5KpTHhjUV0YWI9afK1zR6kCB2Z7WCMg';
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Music Quest server is running' });
+});
+
 // Helper function to check if channel is official
 function isOfficialChannel(channelTitle) {
   const officialIndicators = [' - Topic', 'VEVO', 'official'];

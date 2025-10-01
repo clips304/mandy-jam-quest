@@ -138,7 +138,7 @@ export async function getMultipleRecommendations(
       5
     );
 
-    const songs = response.songs.map(song => ({
+    const songs: Song[] = response.songs.map(song => ({
       title: song.title,
       artist: song.artist,
       genre,
@@ -153,7 +153,7 @@ export async function getMultipleRecommendations(
         ...songs[0],
         title: response.message || "Showing fallback results",
         isError: true
-      };
+      } as Song;
     }
 
     return songs;
