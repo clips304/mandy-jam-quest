@@ -17,20 +17,20 @@
     --popover: 240 8% 12%;
     --popover-foreground: 300 15% 90%;
 
-    /* Music-themed purple primary */
-    --primary: 280 90% 65%;
+    /* Blue primary */
+    --primary: 210 100% 60%;
     --primary-foreground: 240 10% 8%;
 
-    /* Gaming secondary with pink tint */
-    --secondary: 320 25% 20%;
-    --secondary-foreground: 300 20% 95%;
+    /* Red secondary */
+    --secondary: 0 85% 25%;
+    --secondary-foreground: 0 0% 95%;
 
     /* Muted gaming tones */
     --muted: 240 5% 16%;
     --muted-foreground: 240 10% 60%;
 
-    /* Neon accent for highlights */
-    --accent: 300 100% 75%;
+    /* Blue accent for highlights */
+    --accent: 210 100% 70%;
     --accent-foreground: 240 10% 8%;
 
     /* Gaming red for destructive */
@@ -40,25 +40,25 @@
     /* Subtle borders and inputs */
     --border: 240 8% 20%;
     --input: 240 8% 16%;
-    --ring: 280 90% 65%;
+    --ring: 210 100% 60%;
 
     --radius: 0.75rem;
 
     /* Music Quest Custom Tokens */
-    --neon-purple: 280 90% 65%;
-    --neon-pink: 320 100% 70%;
-    --neon-blue: 240 100% 70%;
+    --neon-purple: 210 100% 60%;
+    --neon-pink: 0 100% 65%;
+    --neon-blue: 210 100% 70%;
     --game-success: 120 100% 60%;
     --game-warning: 45 100% 60%;
-    
+
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(280, 90%, 65%), hsl(320, 100%, 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(240, 100%, 70%), hsl(280, 90%, 65%));
+    --gradient-primary: linear-gradient(135deg, hsl(210, 100%, 60%), hsl(0, 100%, 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(210, 100%, 70%), hsl(210, 90%, 50%));
     --gradient-game: linear-gradient(180deg, hsl(240, 10%, 12%), hsl(240, 8%, 8%));
-    --gradient-neon: linear-gradient(90deg, hsl(280, 90%, 65%), hsl(320, 100%, 70%), hsl(240, 100%, 70%));
-    
+    --gradient-neon: linear-gradient(90deg, hsl(210, 100%, 60%), hsl(0, 100%, 65%), hsl(210, 100%, 70%));
+
     /* Shadows & Effects */
-    --shadow-neon: 0 0 20px hsl(280, 90%, 65%, 0.5);
+    --shadow-neon: 0 0 20px hsl(210, 100%, 60%, 0.5);
     --shadow-card: 0 8px 32px hsl(240, 10%, 4%, 0.8);
     --shadow-game: 0 4px 20px hsl(240, 10%, 4%, 0.6);
     
@@ -175,6 +175,6 @@
   }
   
   .neon-text {
-    text-shadow: 0 0 10px hsl(var(--neon-purple)), 0 0 20px hsl(var(--neon-purple));
+    text-shadow: 0 0 10px hsl(var(--neon-blue)), 0 0 20px hsl(var(--neon-blue));
   }
 }
