@@ -1,13 +1,15 @@
 export interface Song {
   title: string;
   artist: string;
-  decade: string;
-  year: string; // Accurate release year from YouTube API
+  decade?: string;
+  genre?: string;
+  year: number | string;
   url: string;
-  thumbnail: string;
+  thumbnail?: string;
   isCustomPick?: boolean;
-  isOfficialSource?: boolean; // Indicates if song is from verified artist channel
-  isError?: boolean; // Indicates if this is an error message
+  isOfficialSource?: boolean;
+  isError?: boolean;
+  isFallback?: boolean;
 }
 
 export interface GamePreferences {

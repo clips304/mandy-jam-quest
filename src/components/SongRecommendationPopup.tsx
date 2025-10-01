@@ -41,6 +41,15 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Fallback Message Display */}
+          {songs.length > 0 && songs[0].isFallback && (
+            <div className="text-center py-2 px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <p className="text-sm text-yellow-400">
+                ⚠️ Showing fallback results
+              </p>
+            </div>
+          )}
+
           {/* Error Message Display */}
           {songs.length > 0 && songs[0].isError ? (
             <div className="text-center py-8">
