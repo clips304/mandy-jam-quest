@@ -132,6 +132,9 @@
     background: var(--gradient-game);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
@@ -176,5 +179,8 @@
   
   .neon-text {
     text-shadow: 0 0 10px hsl(var(--neon-blue)), 0 0 20px hsl(var(--neon-blue));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    filter: contrast(1.1);
   }
 }

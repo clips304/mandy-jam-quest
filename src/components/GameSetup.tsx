@@ -45,10 +45,16 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
       <div className="w-full max-w-md">
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 neon-text gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-5xl font-extrabold mb-2 tracking-tight" style={{
+            background: 'linear-gradient(135deg, hsl(210, 100%, 70%), hsl(0, 100%, 75%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            filter: 'contrast(1.15) brightness(1.1)'
+          }}>
             ✨ Mandy's Music Quest ✨
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-foreground/90 text-lg font-medium">
             Welcome Mandy! Let's play and discover your songs 🌸
           </p>
         </div>
@@ -56,7 +62,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         {/* Setup Card */}
         <Card className="shadow-card glass-effect border-border/50">
           <CardHeader>
-            <CardTitle className="text-center gradient-primary bg-clip-text text-transparent">
+            <CardTitle className="text-center text-2xl font-bold text-foreground">
               Mandy, pick your vibe 🌸
             </CardTitle>
           </CardHeader>
