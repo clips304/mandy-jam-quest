@@ -1,7 +1,7 @@
 import { Song } from '../types/game.ts';
 import { parseDecade } from './youtubeApiService.ts';
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 export interface MusicPreferences {
   genres: string[];
@@ -35,7 +35,7 @@ async function fetchFromMusicAPI(
     params.append('endYear', endYear.toString());
     params.append('count', count.toString());
 
-    const url = `${API_BASE_URL}/api/music?${params.toString()}`;
+    const url = `${API_BASE_URL}/music?${params.toString()}`;
     console.log('🎵 Fetching from:', url);
 
     const response = await fetch(url, {
@@ -58,7 +58,7 @@ async function fetchFromMusicAPI(
     return data;
 
   } catch (error) {
-    console.error('❌ Could not connect to music server:', error);
+    console.error('❌ Could not connect to backend:', error);
 
     return {
       songs: [
@@ -71,7 +71,7 @@ async function fetchFromMusicAPI(
         }
       ],
       isFallback: true,
-      message: "Could not connect to the server"
+      message: "Could not connect to the backend"
     };
   }
 }
@@ -162,7 +162,7 @@ export async function getMultipleRecommendations(
     console.error('Error fetching multiple recommendations:', error);
 
     return [{
-      title: "⚠️ Could not connect to the server. Try again later.",
+      title: "⚠️ Could not connect to the backend. Try again later.",
       artist: "System",
       genre,
       year: 2024,

@@ -47,7 +47,7 @@ const MusicTest: React.FC = () => {
         count: '5'
       });
 
-      const response = await fetch(`http://localhost:3001/api/music?${params.toString()}`);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/music?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Server returned status ${response.status}`);
@@ -63,7 +63,7 @@ const MusicTest: React.FC = () => {
       }
 
     } catch (err) {
-      setError('Could not connect to the server. Make sure the backend is running on port 3001.');
+      setError('Could not connect to the backend. Please try again.');
       console.error('Error fetching music:', err);
     } finally {
       setLoading(false);

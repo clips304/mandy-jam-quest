@@ -1,1 +1,4 @@
 project_id = "hlcogdzzbodnbxpwqwdp"
+
+[functions.music]
+verify_jwt = false

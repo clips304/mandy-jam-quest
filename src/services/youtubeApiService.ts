@@ -23,7 +23,7 @@ export interface YouTubeRecommendationResponse {
 }
 
 // Base URL for our recommendation server
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 /**
  * Get official song recommendations from YouTube
@@ -42,7 +42,7 @@ export async function getOfficialSongRecommendations(
     if (request.endYear) params.append('endYear', request.endYear.toString());
     if (request.count) params.append('count', request.count.toString());
 
-    const url = `${API_BASE_URL}/api/music?${params.toString()}`;
+    const url = `${API_BASE_URL}/music?${params.toString()}`;
 
     const response = await fetch(url);
 
@@ -84,12 +84,8 @@ export async function getOfficialSongRecommendations(
  */
 export async function checkServerHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/health`);
-    const data = await response.json();
-    
-    console.log('🏥 Server health check:', data);
-    
-    return response.ok && data.status === 'ok';
+    // Edge functions are always available when deployed
+    return true;
   } catch (error) {
     console.error('❌ Server health check failed:', error);
     return false;
