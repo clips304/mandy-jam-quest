@@ -30,13 +30,21 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
 
   return (
     <Dialog open={true} modal>
-      <DialogContent className="sm:max-w-md glass-effect border-border/50 shadow-card">
+      <DialogContent className="sm:max-w-md glass-effect shadow-card" style={{
+        borderColor: 'hsl(210, 100%, 60%)',
+        borderWidth: '2px'
+      }}>
         <DialogHeader>
-          <DialogTitle className="text-center gradient-primary bg-clip-text text-transparent">
+          <DialogTitle className="text-center" style={{
+            background: 'linear-gradient(135deg, hsl(210, 100%, 70%), hsl(0, 100%, 75%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
             🎉 Level {level} Complete, Mandy!
           </DialogTitle>
           <p className="text-center text-sm text-muted-foreground mt-2">
-            Here are 5 songs just for you 💙
+            Here are your songs ❤️💙
           </p>
         </DialogHeader>
 
@@ -81,7 +89,6 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                         
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground mb-1 truncate">
-                            <span className="text-xs text-neon-purple block mb-1">Mandy, you might love this track:</span>
                             {song.title}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-1 truncate">
@@ -120,18 +127,27 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
                       <div className="flex gap-2 mt-4">
                         <Button
                           onClick={() => handlePlayOnYouTube(song)}
-                          variant="game"
                           size="sm"
                           className="flex-1"
+                          style={{
+                            background: 'linear-gradient(135deg, hsl(0, 100%, 65%), hsl(0, 90%, 50%))',
+                            color: 'white',
+                            borderColor: 'hsl(0, 100%, 70%)'
+                          }}
                         >
                           <Play className="w-4 h-4 mr-2" />
-                          This is your song, Mandy 🎶
+                          Play
                         </Button>
-                        
+
                         <Button
                           onClick={() => handleAddToPlaylist(song)}
-                          variant="secondary"
                           size="sm"
+                          style={{
+                            background: 'transparent',
+                            borderColor: 'hsl(210, 100%, 60%)',
+                            borderWidth: '1px',
+                            color: 'hsl(210, 100%, 70%)'
+                          }}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Add
@@ -156,9 +172,12 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
           <div className="flex gap-3">
             <Button
               onClick={onNextLevel}
-              variant="game"
               size="lg"
               className="flex-1 transition-bounce"
+              style={{
+                background: 'linear-gradient(135deg, hsl(0, 100%, 65%), hsl(0, 90%, 50%))',
+                color: 'white'
+              }}
             >
               Nice work Mandy, ready for the next level? 🚀
             </Button>

@@ -33,12 +33,12 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   });
 
   const handleStartGame = () => {
-    if (preferences.genre && preferences.decade) {
+    if (preferences.genre && preferences.decade && preferences.artist) {
       onStartGame(preferences);
     }
   };
 
-  const isValid = preferences.genre && preferences.decade;
+  const isValid = preferences.genre && preferences.decade && preferences.artist;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -52,10 +52,10 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             backgroundClip: 'text',
             filter: 'contrast(1.15) brightness(1.1)'
           }}>
-            ✨ Mandy's Music Quest ✨
+            Made for Mandy ❤️💙
           </h1>
           <p className="text-foreground/90 text-lg font-medium">
-            Welcome Mandy! Let's play and discover your songs 🌸
+            Play the game and discover your perfect songs 🎵
           </p>
         </div>
 
@@ -114,7 +114,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             {/* Artist Input */}
             <div className="space-y-2">
               <Label htmlFor="artist" className="text-sm font-medium">
-                Artist (Optional)
+                Artist *
               </Label>
               <Input
                 id="artist"
@@ -129,9 +129,12 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             <Button
               onClick={handleStartGame}
               disabled={!isValid}
-              variant="game"
               size="lg"
               className="w-full"
+              style={{
+                background: isValid ? 'linear-gradient(135deg, hsl(0, 100%, 65%), hsl(0, 90%, 50%))' : undefined,
+                color: isValid ? 'white' : undefined
+              }}
             >
               Let's Go, Mandy! 🎵
             </Button>

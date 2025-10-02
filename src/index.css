@@ -129,7 +129,7 @@
 
   body {
     @apply bg-background text-foreground;
-    background: var(--gradient-game);
+    background: linear-gradient(180deg, hsl(220, 80%, 15%) 0%, hsl(240, 60%, 10%) 30%, hsl(340, 60%, 15%) 70%, hsl(0, 70%, 20%) 100%);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;

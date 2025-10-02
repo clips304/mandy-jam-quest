@@ -1,6 +1,5 @@
 import { Song } from '../types/game.ts';
-import { parseDecade } from './youtubeApiService.ts';
-import { supabase } from '@/integrations/supabase/client';
+import { parseDecade, searchOfficialSongs } from './youtubeDirectService.ts';
 
 export interface MusicPreferences {
   genres: string[];
@@ -123,49 +122,58 @@ export async function getMultipleRecommendations(
   artist?: string
 ): Promise<Song[]> {
   try {
-    const decadeRange = parseDecade(decade);
-
-    if (!decadeRange) {
-      console.error('Invalid decade:', decade);
-      return [];
+    if (!artist) {
+      return [{
+        title: "Please select an artist to get song recommendations",
+        artist: "System",
+        genre,
+        year: 2024,
+        decade,
+        url: "#",
+        isError: true
+      }];
     }
 
-    const response = await fetchFromMusicAPI(
-      artist,
-      decadeRange.startYear,
-      decadeRange.endYear,
-      5
-    );
+    console.log(`🎵 Searching for ${artist} songs from ${decade}...`);
 
-    const songs: Song[] = response.songs.map(song => ({
+    const youtubeSongs = await searchOfficialSongs(artist, decade, 5);
+
+    if (youtubeSongs.length === 0) {
+      return [{
+        title: `No official songs found for ${artist} in ${decade}. Try another filter.`,
+        artist: "No Results",
+        genre,
+        year: 2024,
+        decade,
+        url: "#",
+        isError: true
+      }];
+    }
+
+    const songs: Song[] = youtubeSongs.map(song => ({
       title: song.title,
       artist: song.artist,
       genre,
-      year: song.year,
+      year: parseInt(song.year),
+      decade,
       url: song.url,
       thumbnail: song.thumbnail,
-      isFallback: response.isFallback
+      isOfficialSource: song.official
     }));
 
-    if (response.isFallback && songs.length > 0) {
-      songs[0] = {
-        ...songs[0],
-        title: response.message || "Showing fallback results",
-        isError: true
-      } as Song;
-    }
-
+    console.log(`✅ Found ${songs.length} songs for ${artist}`);
     return songs;
 
   } catch (error) {
-    console.error('Error fetching multiple recommendations:', error);
+    console.error('Error fetching recommendations:', error);
 
     return [{
-      title: "⚠️ Could not connect to the backend. Try again later.",
-      artist: "System",
+      title: "Error connecting to YouTube. Please try again.",
+      artist: "System Error",
       genre,
       year: 2024,
-      url: "https://music.youtube.com",
+      decade,
+      url: "#",
       isError: true
     }];
   }

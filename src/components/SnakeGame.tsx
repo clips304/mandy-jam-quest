@@ -352,33 +352,36 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       ctx.stroke();
     }
     
-    // Draw snake
+    // Draw snake (glowing electric red)
     snake.forEach((segment, index) => {
       const gradient = ctx.createLinearGradient(
         segment.x * GRID_SIZE, segment.y * GRID_SIZE,
         segment.x * GRID_SIZE + GRID_SIZE, segment.y * GRID_SIZE + GRID_SIZE
       );
-      
+
       if (index === 0) {
-        // Head
-        gradient.addColorStop(0, '#a855f7');
-        gradient.addColorStop(1, '#ec4899');
+        // Head - bright electric red
+        gradient.addColorStop(0, '#ff0040');
+        gradient.addColorStop(1, '#ff3366');
       } else {
-        // Body
-        gradient.addColorStop(0, '#8b5cf6');
-        gradient.addColorStop(1, '#a855f7');
+        // Body - darker red
+        gradient.addColorStop(0, '#cc0033');
+        gradient.addColorStop(1, '#ff0040');
       }
-      
+
       ctx.fillStyle = gradient;
+      ctx.shadowColor = '#ff0040';
+      ctx.shadowBlur = 10;
       ctx.fillRect(
         segment.x * GRID_SIZE + 1,
         segment.y * GRID_SIZE + 1,
         GRID_SIZE - 2,
         GRID_SIZE - 2
       );
+      ctx.shadowBlur = 0;
     });
     
-    // Draw food
+    // Draw food (bright cyan blue)
     const foodGradient = ctx.createRadialGradient(
       food.x * GRID_SIZE + GRID_SIZE / 2,
       food.y * GRID_SIZE + GRID_SIZE / 2,
@@ -387,16 +390,19 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       food.y * GRID_SIZE + GRID_SIZE / 2,
       GRID_SIZE / 2
     );
-    foodGradient.addColorStop(0, '#10b981');
-    foodGradient.addColorStop(1, '#059669');
-    
+    foodGradient.addColorStop(0, '#00d9ff');
+    foodGradient.addColorStop(1, '#0099cc');
+
     ctx.fillStyle = foodGradient;
+    ctx.shadowColor = '#00d9ff';
+    ctx.shadowBlur = 15;
     ctx.fillRect(
       food.x * GRID_SIZE + 2,
       food.y * GRID_SIZE + 2,
       GRID_SIZE - 4,
       GRID_SIZE - 4
     );
+    ctx.shadowBlur = 0;
   }, [snake, food]);
 
   // Start game loop when state changes to playing
@@ -419,10 +425,14 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ preferences, onAddToPlaylist, onR
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2 neon-text gradient-primary bg-clip-text text-transparent">
-            ✨ Mandy's Music Quest ✨
+          <h1 className="text-3xl font-bold mb-2" style={{
+            background: 'linear-gradient(135deg, hsl(210, 100%, 70%), hsl(0, 100%, 75%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Made for Mandy ❤️💙
           </h1>
-          <p className="text-sm text-muted-foreground mb-2">Made for Mandy 💙</p>
           <p className="text-muted-foreground">
             {preferences.genre} • {preferences.decade} 
             {preferences.artist && ` • ${preferences.artist}`}
