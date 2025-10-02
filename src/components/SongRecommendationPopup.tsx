@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Card, CardContent } from '@/components/ui/card.tsx';
-import { ExternalLink, Plus, Play, RotateCcw, Sparkles } from 'lucide-react';
+import { ExternalLink, Plus, Play, RotateCcw, Sparkles, X } from 'lucide-react';
 import { Song } from '../types/game.ts';
 
 interface SongRecommendationPopupProps {
@@ -11,6 +11,7 @@ interface SongRecommendationPopupProps {
   onNextLevel: () => void;
   onRestart: () => void;
   onAddToPlaylist: (song: Song) => void;
+  onClose?: () => void;
 }
 
 const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
@@ -18,7 +19,8 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
   level,
   onNextLevel,
   onRestart,
-  onAddToPlaylist
+  onAddToPlaylist,
+  onClose
 }) => {
   const handleAddToPlaylist = (song: Song) => {
     onAddToPlaylist(song);
@@ -28,12 +30,24 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
     window.open(song.url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      onNextLevel();
+    }
+  };
+
   return (
     <Dialog open={true} modal>
       <DialogContent className="sm:max-w-md modal-container" style={{
         borderColor: 'hsl(210, 100%, 60%)',
-        borderWidth: '2px'
+        borderWidth: '2px',
+        position: 'relative'
       }}>
+        <button className="close-btn" onClick={handleClose}>
+          <X className="w-6 h-6" />
+        </button>
         <DialogHeader>
           <DialogTitle className="text-center" style={{
             background: 'linear-gradient(135deg, hsl(210, 100%, 70%), hsl(0, 100%, 75%))',
