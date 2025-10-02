@@ -183,4 +183,31 @@
     -moz-osx-font-smoothing: grayscale;
     filter: contrast(1.1);
   }
+
+  /* Modal Container Styling */
+  .modal-container {
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.85);
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.6);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Song List Scrollable Container */
+  .song-list {
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  /* Song Card Styling */
+  .song-card {
+    border-radius: 8px;
+    background: #111;
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

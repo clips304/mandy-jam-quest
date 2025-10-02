@@ -30,7 +30,7 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
 
   return (
     <Dialog open={true} modal>
-      <DialogContent className="sm:max-w-md glass-effect shadow-card" style={{
+      <DialogContent className="sm:max-w-md modal-container" style={{
         borderColor: 'hsl(210, 100%, 60%)',
         borderWidth: '2px'
       }}>
@@ -70,9 +70,9 @@ const SongRecommendationPopup: React.FC<SongRecommendationPopupProps> = ({
           ) : (
             <>
               {/* Song Cards */}
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="song-list space-y-3 max-h-96">
                 {songs.filter(song => !song.isError).map((song, index) => (
-                  <Card key={index} className="glass-effect border-border/50">
+                  <Card key={index} className="song-card glass-effect border-border/50">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         {song.thumbnail ? (
